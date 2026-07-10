@@ -1,5 +1,14 @@
 import { getStats, getVendors, toggleVendor } from "./services/api.js"
 
+const TOKEN_KEY = "wa-admin-token"
+
+// Redirigir a login si no hay token
+if (!localStorage.getItem(TOKEN_KEY)) {
+  const brand = new URLSearchParams(window.location.search).get("brand")
+  const dest = brand ? `/login?brand=${brand}` : "/login"
+  window.location.replace(dest)
+}
+
 const params = new URLSearchParams(window.location.search)
 const brand = params.get("brand")
 

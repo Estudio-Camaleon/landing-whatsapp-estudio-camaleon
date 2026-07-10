@@ -136,6 +136,8 @@ Setear en Site settings → Environment variables:
 ```
 SUPABASE_URL = https://[ref].supabase.co
 SUPABASE_ANON_KEY = eyJhbGciOiJ...
+ADMIN_USER = admin
+ADMIN_PASSWORD = <contraseña_segura>
 ```
 
 ### 3. Agregar dominio propio
@@ -150,13 +152,19 @@ UPDATE brands SET domain = 'maggiestore.com' WHERE slug = 'maggiestore';
 
 ## Panel de administración
 
-Accedé vía `https://wsprotador.netlify.app/apps/admin/` (o `?brand=slug` para ver datos de una marca específica).
+Accedé vía `https://wsprotador.netlify.app/login` (o `?brand=slug` para ver datos de una marca específica).
 
 | Endpoint | Método | Descripción |
 |----------|--------|-------------|
-| `/apps/admin/` | GET | Interfaz del panel |
-| `/get-stats` | GET | Devuelve `{ "Vendedor": cantidad }` |
-| `/get-vendors` | GET | Lista de vendedores con estado |
-| `/update-vendor` | POST | Activa/desactiva vendedor (`{ id, active }`) |
+| `/login` | GET | Página de inicio de sesión |
+| `/auth/login` | POST | Autenticación (`{ user, password }`) |
+| `/get-stats` | GET | Métricas (requiere token) |
+| `/get-vendors` | GET | Vendedores (requiere token) |
+| `/update-vendor` | POST | Activar/desactivar (requiere token) |
 
-> ⚠️ Sin auth implementada. Para producción, proteger con password simple, header secreto o Supabase Auth.
+### Auth
+
+- Las credenciales se configuran vía environment variables `ADMIN_USER` y `ADMIN_PASSWORD` en Netlify
+- El login devuelve un token JWT simple firmado con HMAC-SHA256
+- Token expira en 24 h, almacenado en localStorage
+- Todos los endpoints admin validan el token en cada request

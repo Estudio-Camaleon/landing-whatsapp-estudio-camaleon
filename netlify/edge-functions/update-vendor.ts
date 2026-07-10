@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { verifyToken } from "../_shared/auth.ts"
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!
 const SUPABASE_KEY = Deno.env.get("SUPABASE_ANON_KEY")!
@@ -6,6 +7,13 @@ const SUPABASE_KEY = Deno.env.get("SUPABASE_ANON_KEY")!
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 export default async (req: Request) => {
+  const authHeader = req.headers.get("authorization") || ""
+  const token = authHeader.replace("Bearer ", "")
+  const payload = await verifyToken(token)
+  if (!payload) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 })
+  }
+
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "method_not_allowed" }), {
       status: 405

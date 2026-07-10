@@ -7,10 +7,11 @@ create table brands (
 
 create table vendors (
   id uuid primary key default gen_random_uuid(),
-  brand_id uuid references brands(id),
+  brand_id uuid references brands(id) on delete cascade,
   name text,
   phone text,
-  active boolean default true
+  active boolean default true,
+  schedule jsonb default '{}'::jsonb
 );
 
 create table rotation_state (
@@ -21,7 +22,7 @@ create table rotation_state (
 create table events (
   id uuid primary key default gen_random_uuid(),
   brand_id uuid,
-  vendor_id uuid,
+  vendor_id uuid references vendors(id) on delete set null,
   ip text,
   user_agent text,
   created_at timestamp default now()

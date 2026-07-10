@@ -18,6 +18,18 @@ path = "/update-vendor"
 function = "auth-login"
 path = "/auth/login"
 
+[[edge_functions]]
+function = "api-brands"
+path = "/api/brands"
+
+[[edge_functions]]
+function = "api-vendors"
+path = "/api/vendors"
+
+[[edge_functions]]
+function = "api-events"
+path = "/api/events"
+
 [[redirects]]
 from = "/login"
 to = "/apps/admin/login.html"

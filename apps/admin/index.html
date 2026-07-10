@@ -3,31 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin WhatsApp SaaS</title>
+  <title>Admin - WhatsApp Landing</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <h1>Panel de Control</h1>
+  <aside class="sidebar">
+    <h1>Admin Panel</h1>
+    <nav>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#brands">Marcas</a>
+      <a href="#vendors">Vendedores</a>
+      <a href="#events">Eventos</a>
+    </nav>
+    <div class="logout">
+      <a id="logout-btn">Cerrar sesión</a>
+    </div>
+  </aside>
 
-  <section>
-    <h2>Métricas</h2>
-    <div id="stats"></div>
-  </section>
-
-  <section>
-    <h2>Vendedores</h2>
-    <table id="vendors">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Teléfono</th>
-          <th>Activo</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
+  <main class="main" id="section-content">
+    <div class="empty">Cargando...</div>
+  </main>
 
   <script type="module" src="main.js"></script>
 

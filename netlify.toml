@@ -1,0 +1,15 @@
+[[edge_functions]]
+function = "assign-vendor"
+path = "/assign-vendor"
+
+[[edge_functions]]
+function = "get-stats"
+path = "/get-stats"
+
+[[edge_functions]]
+function = "get-vendors"
+path = "/get-vendors"
+
+[[edge_functions]]
+function = "update-vendor"
+path = "/update-vendor"

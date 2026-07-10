@@ -194,6 +194,39 @@ function showCooldown() {
   btn.parentNode.insertBefore(wrapper, btn.nextSibling);
 }
 
+function showVendorError() {
+  var btn = document.getElementById("cta-button");
+  var sellerEl = document.getElementById("assigned-seller");
+
+  btn.style.display = "none";
+  if (sellerEl) sellerEl.style.display = "none";
+
+  var existing = document.getElementById("vendor-error");
+  if (existing) return;
+
+  var wrapper = document.createElement("div");
+  wrapper.id = "vendor-error";
+  wrapper.className = "vendor-error";
+
+  var icon = document.createElement("div");
+  icon.className = "vendor-error-icon";
+  icon.innerHTML =
+    '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+  wrapper.appendChild(icon);
+
+  var text = document.createElement("p");
+  text.className = "vendor-error-text";
+  text.textContent = "Servicio temporalmente no disponible";
+  wrapper.appendChild(text);
+
+  var hint = document.createElement("p");
+  hint.className = "vendor-error-hint";
+  hint.textContent = "Estamos trabajando para atenderte mejor. Por favor, intent\u00E1 m\u00E1s tarde.";
+  wrapper.appendChild(hint);
+
+  btn.parentNode.insertBefore(wrapper, btn.nextSibling);
+}
+
 async function handleClick(e) {
   e.preventDefault();
 
@@ -220,7 +253,7 @@ async function handleClick(e) {
     }
 
     __secLog("ERROR", "Error al asignar vendedor", err);
-    alert("Error al conectar con un asesor");
+    showVendorError();
   }
 }
 

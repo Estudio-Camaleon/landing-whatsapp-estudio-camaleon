@@ -392,6 +392,32 @@ body {
   opacity: 0.6;
 }
 
+.vendor-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 0;
+  animation: cooldownIn 0.5s ease-out;
+}
+
+.vendor-error-icon {
+  margin-bottom: 4px;
+}
+
+.vendor-error-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.vendor-error-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  opacity: 0.6;
+}
+
 .noscript-msg {
   position: fixed;
   bottom: 20px;

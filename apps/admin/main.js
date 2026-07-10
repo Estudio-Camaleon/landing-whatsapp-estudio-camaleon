@@ -251,6 +251,7 @@ function renderVendorsTable(container) {
             <td style="font-size:0.8rem;color:rgba(255,255,255,0.4)">${hasSchedule ? "Configurado" : "Sin horario"}</td>
             <td class="actions">
               <button class="btn btn-sm btn-ghost" data-edit="${v.id}">Editar</button>
+              <button class="btn btn-sm ${v.active ? 'btn-warning' : 'btn-ghost'}" data-suspend="${v.id}">${v.active ? "Suspender" : "Reactivar"}</button>
               <button class="btn btn-sm btn-danger" data-del="${v.id}">Eliminar</button>
             </td>
           </tr>`
@@ -265,10 +266,22 @@ function renderVendorsTable(container) {
   wrap.querySelectorAll("[data-del]").forEach(btn => {
     btn.onclick = async () => {
       if (!confirm("¿Eliminar este vendedor?")) return
-      await deleteVendor(btn.dataset.edit)
-      vendors = vendors.filter(v => v.id !== btn.dataset.edit)
+      await deleteVendor(btn.dataset.del)
+      vendors = vendors.filter(v => v.id !== btn.dataset.del)
       renderVendorsTable(container)
     }
+  })
+  wrap.querySelectorAll("[data-suspend]").forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.suspend
+      const v = vendors.find(x => x.id === id)
+      if (!v) return
+      await updateVendor({ id, active: !v.active })
+      v.active = !v.active
+      renderVendorsTable(container)
+    }
+  })
+}
   })
 }
 

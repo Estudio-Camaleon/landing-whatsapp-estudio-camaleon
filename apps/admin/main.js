@@ -2,7 +2,8 @@ import {
   getStats,
   listBrands, createBrand, updateBrand, deleteBrand,
   listVendors, createVendor, updateVendor, deleteVendor,
-  listEvents
+  listEvents,
+  uploadAsset
 } from "./services/api.js"
 
 const TOKEN_KEY = "wa-admin-token"
@@ -184,6 +185,17 @@ async function brandForm(brandId) {
     <input type="text" id="f-brand-domain" value="${brand?.domain || ""}" placeholder="ej: mistore.com">
     <label>Slug (opcional)</label>
     <input type="text" id="f-brand-slug" value="${brand?.slug || ""}" placeholder="auto si se deja vacío">
+    ${isEdit ? `
+    <label>Logo (máx 5 MB)</label>
+    <input type="file" id="f-brand-logo" accept="image/*">
+    ${brand?.logo_url ? `<div class="upload-preview"><img src="${brand.logo_url}" height="40"><span class="upload-ok">Subido</span></div>` : ""}
+    <label>Fondo (máx 10 MB)</label>
+    <input type="file" id="f-brand-bg" accept="image/*">
+    ${brand?.background_url ? `<div class="upload-preview"><span class="upload-ok">Subido</span></div>` : ""}
+    <label>Fondo mobile (máx 10 MB)</label>
+    <input type="file" id="f-brand-bg-mobile" accept="image/*">
+    ${brand?.background_mobile_url ? `<div class="upload-preview"><span class="upload-ok">Subido</span></div>` : ""}
+    ` : ""}
     <div class="form-actions">
       <button class="btn btn-ghost" id="btn-modal-cancel">Cancelar</button>
       <button class="btn btn-primary" id="btn-modal-save">${isEdit ? "Guardar" : "Crear"}</button>
@@ -200,7 +212,24 @@ async function brandForm(brandId) {
       slug: modal.querySelector("#f-brand-slug").value.trim() || undefined
     }
     if (isEdit) data.id = brandId
-    isEdit ? await updateBrand(data) : await createBrand(data)
+    const result = isEdit ? await updateBrand(data) : await createBrand(data)
+    const newId = result?.id || brandId
+
+    const fileInputs = [
+      { el: modal.querySelector("#f-brand-logo"), type: "logo" },
+      { el: modal.querySelector("#f-brand-bg"), type: "background" },
+      { el: modal.querySelector("#f-brand-bg-mobile"), type: "background_mobile" }
+    ]
+    await Promise.all(fileInputs.map(async ({ el, type }) => {
+      if (!el || !el.files || !el.files[0]) return
+      const file = el.files[0]
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      await new Promise(resolve => { reader.onload = resolve })
+      const base64 = reader.result.split(",")[1]
+      await uploadAsset(newId, type, base64, file.type)
+    }))
+
     modal.closest(".modal-overlay").remove()
     renderBrands(document.getElementById("section-content"))
   }

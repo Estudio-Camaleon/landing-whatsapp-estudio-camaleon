@@ -80,3 +80,11 @@ export async function listEvents(filters = {}) {
   if (filters.limit) params.set("limit", filters.limit)
   return req(`/api/events?${params.toString()}`)
 }
+
+// ─── Upload ───
+export async function uploadAsset(brandId, assetType, fileBase64, mimeType) {
+  return req("/api/upload-asset", {
+    method: "POST",
+    body: JSON.stringify({ brand_id: brandId, asset_type: assetType, file_base64: fileBase64, mime_type: mimeType })
+  })
+}

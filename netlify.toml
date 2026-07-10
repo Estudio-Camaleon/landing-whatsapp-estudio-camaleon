@@ -26,6 +26,14 @@ path = "/api/vendors"
 function = "api-events"
 path = "/api/events"
 
+[[edge_functions]]
+function = "api-upload-asset"
+path = "/api/upload-asset"
+
+[[edge_functions]]
+function = "api-brand-config"
+path = "/api/brand-config"
+
 [[redirects]]
 from = "/login"
 to = "/apps/admin/login.html"

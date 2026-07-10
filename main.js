@@ -257,10 +257,29 @@ async function handleClick(e) {
   }
 }
 
-function init() {
+async function loadBrandAssets() {
+  var slug = null;
+  if (window.__brands) {
+    for (var key in window.__brands) {
+      if (window.__brands[key] === CONFIG) { slug = window.__brands[key].id; break; }
+    }
+  }
+  var q = slug ? "?slug=" + slug : "";
+  try {
+    var res = await fetch("/api/brand-config" + q);
+    if (!res.ok) return;
+    var data = await res.json();
+    if (data.logo_url) CONFIG.logo = data.logo_url;
+    if (data.background_url) CONFIG.background = data.background_url;
+    if (data.background_mobile_url) CONFIG.background_mobile = data.background_mobile_url;
+  } catch (e) {}
+}
+
+async function init() {
   var brandName = window.location.hostname.replace(/^www\./, "").toLowerCase();
   var params = new URLSearchParams(window.location.search);
   if (params.get("brand")) brandName = params.get("brand");
+  await loadBrandAssets();
 
   __secLog("INFO", "P\u00E1gina cargada", {
     brand: brandName,

@@ -282,8 +282,6 @@ function renderVendorsTable(container) {
     }
   })
 }
-  })
-}
 
 async function vendorForm(vendorId) {
   const isEdit = !!vendorId

@@ -14,44 +14,30 @@ export default async (req: Request) => {
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 })
   }
   const url = new URL(req.url)
-  const host = req.headers.get("host") || ""
   const brandSlug = url.searchParams.get("brand")
 
-  let brand = null
+  let vendors, events
 
   if (brandSlug) {
-    const { data } = await supabase
+    const { data: brand } = await supabase
       .from("brands")
       .select("*")
       .eq("slug", brandSlug)
       .single()
-    brand = data
+    if (!brand) {
+      return new Response(JSON.stringify({ error: "brand_not_found" }), { status: 404 })
+    }
+    const v = await supabase.from("vendors").select("id, name").eq("brand_id", brand.id)
+    vendors = v.data
+    const e = await supabase.from("events").select("vendor_id").eq("brand_id", brand.id)
+    events = e.data
+  } else {
+    // Global stats (admin panel)
+    const v = await supabase.from("vendors").select("id, name")
+    vendors = v.data
+    const e = await supabase.from("events").select("vendor_id")
+    events = e.data
   }
-
-  if (!brand) {
-    const { data } = await supabase
-      .from("brands")
-      .select("*")
-      .eq("domain", host)
-      .single()
-    brand = data
-  }
-
-  if (!brand) {
-    return new Response(JSON.stringify({ error: "brand_not_found" }), {
-      status: 404
-    })
-  }
-
-  const { data: vendors } = await supabase
-    .from("vendors")
-    .select("id, name")
-    .eq("brand_id", brand.id)
-
-  const { data: events } = await supabase
-    .from("events")
-    .select("vendor_id")
-    .eq("brand_id", brand.id)
 
   const counts = {}
   if (events) {

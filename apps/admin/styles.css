@@ -203,6 +203,7 @@ td.actions {
 }
 
 .badge-green { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.badge-warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
 .badge-gray { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
 
 /* ─── Modal ─── */

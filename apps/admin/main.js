@@ -247,7 +247,7 @@ function renderVendorsTable(container) {
             <td><strong>${v.name}</strong></td>
             <td>${v.phone}</td>
             <td style="color:rgba(255,255,255,0.4)">${brandMap[v.brand_id] || "—"}</td>
-            <td><span class="badge ${v.active ? "badge-green" : "badge-gray"}">${v.active ? "Activo" : "Inactivo"}</span></td>
+            <td><span class="badge ${v.active ? "badge-green" : "badge-warning"}">${v.active ? "Activo" : "Suspendido"}</span></td>
             <td style="font-size:0.8rem;color:rgba(255,255,255,0.4)">${hasSchedule ? "Configurado" : "Sin horario"}</td>
             <td class="actions">
               <button class="btn btn-sm btn-ghost" data-edit="${v.id}">Editar</button>

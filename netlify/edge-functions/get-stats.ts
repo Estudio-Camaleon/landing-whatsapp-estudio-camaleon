@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import { verifyToken } from "../_shared/auth.ts"
+import { verifyToken } from "./_shared/auth.ts"
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!
 const SUPABASE_KEY = Deno.env.get("SUPABASE_ANON_KEY")!

@@ -1,4 +1,4 @@
-import { signToken } from "../_shared/auth.ts"
+import { signToken } from "./_shared/auth.ts"
 
 export default async (req: Request) => {
   if (req.method !== "POST") {

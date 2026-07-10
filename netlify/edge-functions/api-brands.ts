@@ -61,7 +61,7 @@ export default async (req: Request) => {
 
     if (method === "PUT") {
       const body = await req.json()
-      const { id, name, domain, slug } = body
+      const { id, name, domain, slug, active } = body
 
       if (!id) {
         return new Response(JSON.stringify({ error: "id_required" }), { status: 400 })
@@ -71,6 +71,7 @@ export default async (req: Request) => {
       if (name !== undefined) updates.name = name
       if (domain !== undefined) updates.domain = domain
       if (slug !== undefined) updates.slug = slug
+      if (active !== undefined) updates.active = active
 
       const { data, error } = await supabase
         .from("brands")

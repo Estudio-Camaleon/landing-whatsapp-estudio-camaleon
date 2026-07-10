@@ -11,10 +11,6 @@ function = "get-vendors"
 path = "/get-vendors"
 
 [[edge_functions]]
-function = "update-vendor"
-path = "/update-vendor"
-
-[[edge_functions]]
 function = "auth-login"
 path = "/auth/login"
 

@@ -1,7 +1,7 @@
 const encoder = new TextEncoder()
 
 function getSecret(): string {
-  return Deno.env.get("SUPABASE_ANON_KEY") || ""
+  return Deno.env.get("ADMIN_PASSWORD") || ""
 }
 
 export async function signToken(payload: Record<string, unknown>): Promise<string> {

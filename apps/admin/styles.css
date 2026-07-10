@@ -424,6 +424,12 @@ td.actions {
   }
   .sidebar h1 { display: none; }
   .sidebar nav a { font-size: 0; padding: 10px; text-align: center; }
-  .sidebar nav a::before { font-size: 1.2rem; }
+  .sidebar nav a::before { font-size: 1.1rem; content: "●"; }
+  .sidebar nav a[href="#dashboard"]::before { content: "⊞"; }
+  .sidebar nav a[href="#brands"]::before { content: "⊡"; }
+  .sidebar nav a[href="#vendors"]::before { content: "☰"; }
+  .sidebar nav a[href="#events"]::before { content: "☷"; }
+  .sidebar .logout a { font-size: 0; padding: 10px; text-align: center; }
+  .sidebar .logout a::before { font-size: 1.1rem; content: "←"; }
   .main { padding: 20px 16px; max-width: calc(100vw - 56px); }
 }

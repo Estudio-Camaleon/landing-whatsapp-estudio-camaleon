@@ -2,7 +2,8 @@ create table brands (
   id uuid primary key default gen_random_uuid(),
   name text,
   domain text unique,
-  slug text unique
+  slug text unique,
+  active boolean default true
 );
 
 create table vendors (

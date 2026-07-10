@@ -50,6 +50,12 @@ export default async (req: Request) => {
     })
   }
 
+  if (brand.active === false) {
+    return new Response(JSON.stringify({ error: "brand_suspended" }), {
+      status: 503
+    })
+  }
+
   // 3. Rate limit (5 min)
   const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 

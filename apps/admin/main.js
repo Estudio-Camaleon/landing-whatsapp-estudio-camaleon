@@ -111,6 +111,7 @@ async function renderBrands(container) {
   `
 
   brands = await listBrands()
+  vendors = await listVendors()
   const tbody = buildBrandsTable(container)
 
   document.getElementById("btn-add-brand").onclick = () => brandForm()
@@ -124,17 +125,20 @@ function buildBrandsTable(container) {
   const wrap = container.querySelector(".table-wrap")
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>Nombre</th><th>Dominio</th><th>Slug</th><th>Vendedores</th><th></th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Dominio</th><th>Slug</th><th>Estado</th><th>Vendedores</th><th></th></tr></thead>
       <tbody>
         ${brands.map(b => {
           const vCount = vendors.filter(v => v.brand_id === b.id).length
+          const isActive = b.active !== false
           return `<tr>
             <td><strong>${b.name}</strong></td>
             <td style="color:rgba(255,255,255,0.4)">${b.domain || "—"}</td>
             <td style="color:rgba(255,255,255,0.4)">${b.slug || "—"}</td>
+            <td><span class="badge ${isActive ? "badge-green" : "badge-warning"}">${isActive ? "Activa" : "Suspendida"}</span></td>
             <td>${vCount}</td>
             <td class="actions">
               <button class="btn btn-sm btn-ghost" data-edit="${b.id}">Editar</button>
+              <button class="btn btn-sm ${isActive ? 'btn-warning' : 'btn-ghost'}" data-suspend="${b.id}">${isActive ? "Suspender" : "Reactivar"}</button>
               <button class="btn btn-sm btn-danger" data-del="${b.id}">Eliminar</button>
             </td>
           </tr>`
@@ -149,8 +153,18 @@ function buildBrandsTable(container) {
   wrap.querySelectorAll("[data-del]").forEach(btn => {
     btn.onclick = async () => {
       if (!confirm("¿Eliminar esta marca? También se eliminarán sus vendedores.")) return
-      await deleteBrand(btn.dataset.edit)
-      vendors = vendors.filter(v => v.brand_id !== btn.dataset.edit)
+      await deleteBrand(btn.dataset.del)
+      vendors = vendors.filter(v => v.brand_id !== btn.dataset.del)
+      renderBrands(container)
+    }
+  })
+  wrap.querySelectorAll("[data-suspend]").forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.suspend
+      const b = brands.find(x => x.id === id)
+      if (!b) return
+      await updateBrand({ id, active: !b.active })
+      b.active = !b.active
       renderBrands(container)
     }
   })
@@ -428,7 +442,9 @@ async function renderEvents(container) {
     const brandId = container.querySelector("#ev-filter-brand").value
     eventsFilters.brand_id = brandId
     eventsFilters.vendor_id = ""
-    renderEvents(container)
+    const filtered = brandId ? vendors.filter(v => v.brand_id === brandId) : vendors
+    const vendorSelect = container.querySelector("#ev-filter-vendor")
+    vendorSelect.innerHTML = "<option value=''>Todos</option>" + filtered.map(v => `<option value="${v.id}">${v.name}</option>`).join("")
   }
 
   container.querySelector("#ev-filter-btn").onclick = () => {
@@ -454,19 +470,21 @@ async function loadEventsTable(container) {
     return
   }
 
+  const brandMap = {}
+  brands.forEach(b => brandMap[b.id] = b.name)
+
   wrap.innerHTML = `
     <table>
       <thead><tr><th>Vendedor</th><th>Marca</th><th>IP</th><th>Fecha</th></tr></thead>
       <tbody>
         ${events.map(e => {
-          const brand = brands.find(b => b.id === e.brand_id)
           const date = new Date(e.created_at).toLocaleString("es-AR", {
             day: "2-digit", month: "2-digit", year: "numeric",
             hour: "2-digit", minute: "2-digit"
           })
           return `<tr>
             <td><strong>${e.vendor?.name || "—"}</strong></td>
-            <td style="color:rgba(255,255,255,0.4)">${brand?.name || "—"}</td>
+            <td style="color:rgba(255,255,255,0.4)">${brandMap[e.brand_id] || "—"}</td>
             <td style="font-family:monospace;font-size:0.8rem;color:rgba(255,255,255,0.4)">${e.ip || "—"}</td>
             <td style="font-size:0.82rem;color:rgba(255,255,255,0.5)">${date}</td>
           </tr>`

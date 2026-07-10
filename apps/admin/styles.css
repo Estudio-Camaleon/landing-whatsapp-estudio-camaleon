@@ -258,6 +258,11 @@ td.actions {
   outline: none;
 }
 
+.modal select option {
+  background: #1a1a2e;
+  color: #e0e0e0;
+}
+
 .modal input:focus,
 .modal select:focus {
   border-color: #a78bfa;
@@ -412,6 +417,11 @@ td.actions {
   outline: none;
 }
 
+.filters select option {
+  background: #1a1a2e;
+  color: #e0e0e0;
+}
+
 .filters input:focus,
 .filters select:focus {
   border-color: #a78bfa;
@@ -436,6 +446,12 @@ td.actions {
 .pagination .btn {
   min-width: 36px;
   justify-content: center;
+}
+
+/* ─── Select option fix ─── */
+select option {
+  background: #1a1a2e;
+  color: #e0e0e0;
 }
 
 /* ─── Empty state ─── */

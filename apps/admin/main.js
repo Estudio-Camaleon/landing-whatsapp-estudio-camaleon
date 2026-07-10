@@ -387,6 +387,7 @@ let eventsFilters = { days: "7", brand_id: "", vendor_id: "" }
 
 async function renderEvents(container) {
   brands = await listBrands()
+  vendors = await listVendors()
   const brandOpts = brands.map(b => `<option value="${b.id}">${b.name}</option>`).join("")
 
   let vendorOpts = "<option value=''>Todos</option>"
@@ -433,6 +434,7 @@ async function renderEvents(container) {
   }
 
   container.querySelector("#ev-filter-btn").onclick = () => {
+    eventsFilters.brand_id = container.querySelector("#ev-filter-brand").value
     eventsFilters.days = container.querySelector("#ev-filter-days").value
     eventsFilters.vendor_id = container.querySelector("#ev-filter-vendor").value
     eventsPage = 1
@@ -465,7 +467,7 @@ async function loadEventsTable(container) {
             hour: "2-digit", minute: "2-digit"
           })
           return `<tr>
-            <td><strong>${e.vendors?.name || "—"}</strong></td>
+            <td><strong>${e.vendor?.name || "—"}</strong></td>
             <td style="color:rgba(255,255,255,0.4)">${brand?.name || "—"}</td>
             <td style="font-family:monospace;font-size:0.8rem;color:rgba(255,255,255,0.4)">${e.ip || "—"}</td>
             <td style="font-size:0.82rem;color:rgba(255,255,255,0.5)">${date}</td>

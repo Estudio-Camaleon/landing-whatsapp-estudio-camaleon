@@ -30,7 +30,7 @@ export default async (req: Request) => {
 
     let query = supabase
       .from("events")
-      .select("*, vendors(name)", { count: "exact" })
+      .select("*, vendor:vendor_id(name)", { count: "exact" })
 
     if (brandId) query = query.eq("brand_id", brandId)
     if (vendorId) query = query.eq("vendor_id", vendorId)

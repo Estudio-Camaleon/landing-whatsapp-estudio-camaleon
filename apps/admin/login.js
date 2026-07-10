@@ -7,10 +7,7 @@ const errorEl = document.getElementById("login-error")
 
 // Si ya tiene token, redirigir al panel
 if (localStorage.getItem(TOKEN_KEY)) {
-  const params = new URLSearchParams(window.location.search)
-  const brand = params.get("brand")
-  const dest = brand ? `/apps/admin/?brand=${brand}` : "/apps/admin/"
-  window.location.replace(dest)
+  window.location.replace("/apps/admin/")
 }
 
 form.addEventListener("submit", async (e) => {
@@ -42,10 +39,7 @@ form.addEventListener("submit", async (e) => {
     const { token } = await res.json()
     localStorage.setItem(TOKEN_KEY, token)
 
-    const params = new URLSearchParams(window.location.search)
-    const brand = params.get("brand")
-    const dest = brand ? `/apps/admin/?brand=${brand}` : "/apps/admin/"
-    window.location.href = dest
+    window.location.href = "/apps/admin/"
   } catch {
     errorEl.textContent = "Error de conexión"
   } finally {

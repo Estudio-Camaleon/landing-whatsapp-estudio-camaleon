@@ -1,0 +1,34 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/assign-vendor",
+      "destination": "/api/assign-vendor"
+    },
+    {
+      "source": "/get-stats",
+      "destination": "/api/get-stats"
+    },
+    {
+      "source": "/get-vendors",
+      "destination": "/api/get-vendors"
+    },
+    {
+      "source": "/auth/login",
+      "destination": "/api/auth/login"
+    },
+    {
+      "source": "/login",
+      "destination": "/apps/admin/login.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs@20.x"
+    }
+  }
+}

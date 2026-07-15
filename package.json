@@ -1,0 +1,19 @@
+{
+  "name": "whatsapp-landing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build required'",
+    "start": "vercel start",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0",
+    "vitest": "^1.6.0"
+  }
+}

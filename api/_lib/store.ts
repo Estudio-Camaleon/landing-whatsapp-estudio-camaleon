@@ -61,7 +61,20 @@ let sucursalesStore: StoredSucursal[] = [];
 let vendorsStore: StoredVendor[] = [];
 let seeded = false;
 
+let seedFn: (() => void) | null = null;
+
 export function isSeeded() { return seeded; }
+
+export function onSeed(fn: () => void) {
+  seedFn = fn;
+}
+
+function ensureSeeded() {
+  if (!seeded && seedFn) {
+    seedFn();
+    seeded = true;
+  }
+}
 
 export function seedData(staticBrands: StoredBrand[], staticSucursales: StoredSucursal[], staticVendors: StoredVendor[]) {
   if (seeded) return;
@@ -96,18 +109,22 @@ export function getAllEvents(): Event[] {
 
 // ─── Brands ───
 export function getAllBrands(): StoredBrand[] {
+  ensureSeeded();
   return brandsStore.slice();
 }
 
 export function getBrandById(id: string): StoredBrand | undefined {
+  ensureSeeded();
   return brandsStore.find(b => b.id === id);
 }
 
 export function getBrandBySlug(slug: string): StoredBrand | undefined {
+  ensureSeeded();
   return brandsStore.find(b => b.slug === slug);
 }
 
 export function getBrandByDomain(host: string): StoredBrand | undefined {
+  ensureSeeded();
   const clean = host.replace(/^www\./, "").toLowerCase();
   return brandsStore.find(b => b.domain === clean);
 }
@@ -135,10 +152,12 @@ export function deleteBrand(id: string): boolean {
 
 // ─── Sucursales ───
 export function getSucursalesByBrand(brandId: string): StoredSucursal[] {
+  ensureSeeded();
   return sucursalesStore.filter(s => s.brand_id === brandId);
 }
 
 export function getAllSucursales(): StoredSucursal[] {
+  ensureSeeded();
   return sucursalesStore.slice();
 }
 
@@ -164,14 +183,17 @@ export function deleteSucursal(brandId: string, name: string): boolean {
 
 // ─── Vendors ───
 export function getAllVendors(): StoredVendor[] {
+  ensureSeeded();
   return vendorsStore.slice();
 }
 
 export function getVendorById(id: string): StoredVendor | undefined {
+  ensureSeeded();
   return vendorsStore.find(v => v.id === id);
 }
 
 export function getVendorsByBrand(brandId: string, sucursalName?: string): StoredVendor[] {
+  ensureSeeded();
   let filtered = vendorsStore.filter(v => v.brand_id === brandId);
   if (sucursalName) filtered = filtered.filter(v => v.sucursal_name === sucursalName);
   return filtered;

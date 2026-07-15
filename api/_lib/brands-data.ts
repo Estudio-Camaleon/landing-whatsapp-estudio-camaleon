@@ -1,11 +1,10 @@
 import {
-  seedData,
+  seedData, onSeed, isSeeded,
   getBrandById as storeGetBrandById,
   getBrandBySlug as storeGetBrandBySlug,
   getBrandByDomain as storeGetBrandByDomain,
   getAllBrands as storeGetAllBrands,
   getVendorsByBrand,
-  isSeeded,
 } from "./store";
 
 export interface Employee {
@@ -128,8 +127,8 @@ const staticBrandData: Record<string, BrandConfig> = {
   },
 };
 
-// Initialize store with static data on first import
-function initSeed() {
+// Register seed callback so store auto-seeds on first access
+onSeed(function() {
   if (isSeeded()) return;
 
   const domainBySlug: Record<string, string> = {
@@ -187,9 +186,7 @@ function initSeed() {
   });
 
   seedData(brands, sucursales, vendors);
-}
-
-initSeed();
+});
 
 export function getBrandEmployees(brand: BrandConfig | { id: string }, sucursalName?: string): Employee[] {
   if (sucursalName) {

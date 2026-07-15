@@ -1,3 +1,13 @@
+import {
+  seedData,
+  getBrandById as storeGetBrandById,
+  getBrandBySlug as storeGetBrandBySlug,
+  getBrandByDomain as storeGetBrandByDomain,
+  getAllBrands as storeGetAllBrands,
+  getVendorsByBrand,
+  isSeeded,
+} from "./store";
+
 export interface Employee {
   name: string;
   phone: string;
@@ -32,23 +42,12 @@ export interface BrandConfig {
   logoOverflow?: string;
 }
 
-export function getBrandEmployees(brand: BrandConfig, sucursalName?: string): Employee[] {
-  if (sucursalName && brand.sucursales) {
-    const s = brand.sucursales.find(s => s.name === sucursalName);
-    if (s) return s.employees;
-  }
-  if (brand.employees && brand.employees.length > 0) return brand.employees;
-  if (brand.sucursales) return brand.sucursales.flatMap(s => s.employees);
-  return [];
-}
-
-const brands: Record<string, BrandConfig> = {
+const staticBrandData: Record<string, BrandConfig> = {
   "landing-whatsapp-estudio-camaleon.vercel.app": {
     id: "selector",
     heading: "Elegí tu tienda",
   },
-
-  "maggiestore.com": {
+  maggiestore: {
     id: "maggiestore",
     theme: "indumentaria",
     title: "MaggieStore Indumentaria",
@@ -70,8 +69,7 @@ const brands: Record<string, BrandConfig> = {
     ctaPadding: "16px 32px",
     logoOverflow: "visible",
   },
-
-  "aventus.com": {
+  aventus: {
     id: "aventus",
     theme: "perfumes",
     title: "Aventus Perfumería",
@@ -99,8 +97,7 @@ const brands: Record<string, BrandConfig> = {
     ctaPadding: "14px 28px",
     logoOverflow: "hidden",
   },
-
-  "tuslibrosya.com": {
+  tuslibrosya: {
     id: "tuslibrosya",
     theme: "libreria",
     title: "TusLibrosYa! Librería",
@@ -131,20 +128,107 @@ const brands: Record<string, BrandConfig> = {
   },
 };
 
-export function getBrandByDomain(host: string): BrandConfig | null {
-  const cleanHost = host.replace(/^www\./, "").toLowerCase();
-  return brands[cleanHost] || null;
+// Initialize store with static data on first import
+function initSeed() {
+  if (isSeeded()) return;
+
+  const domainBySlug: Record<string, string> = {
+    maggiestore: "maggiestore.com",
+    aventus: "aventus.com",
+    tuslibrosya: "tuslibrosya.com",
+  };
+
+  const brands = Object.entries(staticBrandData).map(([key, cfg]) => ({
+    id: cfg.id,
+    name: cfg.title || cfg.id,
+    slug: cfg.id,
+    domain: domainBySlug[cfg.id] || null,
+    theme: cfg.theme,
+    title: cfg.title,
+    heading: cfg.heading,
+    message: cfg.message,
+    buttonText: cfg.buttonText,
+    logo: cfg.logo,
+    logoWidth: cfg.logoWidth,
+    logoHeight: cfg.logoHeight,
+    background: cfg.background,
+    backgroundMobile: cfg.backgroundMobile,
+    active: true,
+    cardPadding: cfg.cardPadding,
+    logoMarginBottom: cfg.logoMarginBottom,
+    headingMarginBottom: cfg.headingMarginBottom,
+    sellerMarginBottom: cfg.sellerMarginBottom,
+    ctaPadding: cfg.ctaPadding,
+    logoOverflow: cfg.logoOverflow,
+  }));
+
+  const sucursales: { name: string; address: string; brand_id: string }[] = [];
+  const vendors: {
+    id: string; brand_id: string; sucursal_name: string;
+    name: string; phone: string; active: boolean; schedule: Record<string, any>;
+  }[] = [];
+
+  Object.values(staticBrandData).forEach(cfg => {
+    if (!cfg.sucursales) return;
+    cfg.sucursales.forEach(s => {
+      sucursales.push({ name: s.name, address: s.address, brand_id: cfg.id });
+      s.employees.forEach((e, i) => {
+        vendors.push({
+          id: `${cfg.id}-${s.name}-${i}`,
+          brand_id: cfg.id,
+          sucursal_name: s.name,
+          name: e.name,
+          phone: e.phone,
+          active: true,
+          schedule: {},
+        });
+      });
+    });
+  });
+
+  seedData(brands, sucursales, vendors);
 }
 
-export function getBrandBySlug(slug: string): BrandConfig | null {
-  for (const key in brands) {
-    if (brands[key].id === slug) return brands[key];
+initSeed();
+
+export function getBrandEmployees(brand: BrandConfig | { id: string }, sucursalName?: string): Employee[] {
+  if (sucursalName) {
+    const cfg = staticBrandData[brand.id];
+    if (cfg?.sucursales) {
+      const s = cfg.sucursales.find(x => x.name === sucursalName);
+      if (s) return s.employees;
+    }
+  }
+  if (brand && "employees" in brand && (brand as BrandConfig).employees?.length) {
+    return (brand as BrandConfig).employees!;
+  }
+  const cfg = staticBrandData[brand.id];
+  if (cfg?.sucursales) return cfg.sucursales.flatMap(s => s.employees);
+  if (cfg?.employees) return cfg.employees;
+  return [];
+}
+
+export function getBrandByDomain(host: string) {
+  const store = storeGetBrandByDomain(host);
+  if (store) return { ...store, employees: getBrandEmployees(store) };
+  return null;
+}
+
+export function getBrandBySlug(slug: string) {
+  const store = storeGetBrandBySlug(slug);
+  if (store) {
+    const cfg = staticBrandData[slug];
+    return { ...store, ...cfg, employees: cfg ? getBrandEmployees(cfg) : [] };
+  }
+  if (staticBrandData[slug]) {
+    const cfg = staticBrandData[slug];
+    return { ...cfg, employees: getBrandEmployees(cfg) };
   }
   return null;
 }
 
-export function getDefaultBrand(): BrandConfig {
-  return {
+export function getDefaultBrand() {
+  const brand = {
     id: "default",
     theme: "perfumes",
     title: "WhatsApp Landing",
@@ -161,6 +245,11 @@ export function getDefaultBrand(): BrandConfig {
       { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
       { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
     ],
+    sucursales: [
+      { name: "Casa Central", address: "San Miguel de Tucumán", employees: [
+        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
+      ]},
+    ],
     cardPadding: "48px 40px 40px",
     logoMarginBottom: "0px",
     headingMarginBottom: "28px",
@@ -168,12 +257,20 @@ export function getDefaultBrand(): BrandConfig {
     ctaPadding: "16px 32px",
     logoOverflow: "visible",
   };
+  return brand;
 }
 
-export function getAllBrands(): BrandConfig[] {
-  const result: BrandConfig[] = [];
-  for (const key in brands) {
-    if (key !== "default") result.push(brands[key]);
-  }
-  return result;
+export function getAllBrands() {
+  const store = storeGetAllBrands();
+  return store.map(s => {
+    const cfg = staticBrandData[s.slug || s.id];
+    return { ...s, ...cfg, employees: cfg ? getBrandEmployees(cfg) : [] };
+  });
+}
+
+export function getBrandById(id: string) {
+  const s = storeGetBrandById(id);
+  if (!s) return null;
+  const cfg = staticBrandData[s.slug || s.id];
+  return { ...s, ...cfg, employees: cfg ? getBrandEmployees(cfg) : [] };
 }

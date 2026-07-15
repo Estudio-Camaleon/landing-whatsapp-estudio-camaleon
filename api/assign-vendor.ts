@@ -1,6 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getBrandByDomain, getBrandBySlug, getDefaultBrand, getBrandEmployees } from "./_lib/brands-data";
-import { addEvent, getRecentEvents, getRotationState, setRotationState } from "./_lib/store";
+import {
+  addEvent, getRecentEvents, getRotationState, setRotationState,
+  getVendorsByBrand
+} from "./_lib/store";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   if (req.method !== "GET") {
@@ -38,22 +41,33 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     });
   }
 
-  const vendors = getBrandEmployees(brand, sucursalName || undefined);
-  if (vendors.length === 0) {
+  // Build vendor list: prefer dynamic store, fall back to static
+  let vendorList: { name: string; phone: string }[] = [];
+  const dynamicVendors = getVendorsByBrand(brand.id, sucursalName || undefined);
+  if (dynamicVendors.length > 0) {
+    vendorList = dynamicVendors.map(v => ({ name: v.name, phone: v.phone }));
+  } else {
+    vendorList = getBrandEmployees(brand, sucursalName || undefined).map(e => ({
+      name: e.name,
+      phone: atob(e.phone),
+    }));
+  }
+
+  if (vendorList.length === 0) {
     return res.status(500).json({ error: "no_vendors" });
   }
 
   const rotation = getRotationState(brand.id);
   let nextIndex = 0;
   if (rotation) {
-    nextIndex = (rotation.last_vendor_index + 1) % vendors.length;
+    nextIndex = (rotation.last_vendor_index + 1) % vendorList.length;
     setRotationState({ brand_id: brand.id, last_vendor_index: nextIndex });
   } else {
     setRotationState({ brand_id: brand.id, last_vendor_index: 0 });
   }
 
-  const vendor = vendors[nextIndex];
-  const decodedPhone = atob(vendor.phone);
+  const vendor = vendorList[nextIndex];
+  const decodedPhone = vendor.phone;
 
   const messages = ["Hola! Vengo de la web", "Buenas, quiero info", "Hola, me interesa un producto"];
   const message = messages[Math.floor(Math.random() * messages.length)];

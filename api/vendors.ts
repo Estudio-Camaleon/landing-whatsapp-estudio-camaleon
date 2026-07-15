@@ -1,6 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { verifyToken } from "./_lib/auth";
-import { getAllBrands, getBrandEmployees } from "./_lib/brands-data";
+import {
+  getAllVendors, getVendorById, getVendorsByBrand,
+  createVendor, updateVendor, deleteVendor
+} from "./_lib/store";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   const authHeader = (req.headers["authorization"] as string) || "";
@@ -13,31 +16,45 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   if (req.method === "GET") {
     const brandId = req.query.brand_id as string;
     const vendorId = req.query.id as string;
-
-    const allBrands = getAllBrands();
-    let vendors = allBrands.flatMap(b =>
-      getBrandEmployees(b).map((e, i) => ({
-        id: `${b.id}-${i}`,
-        brand_id: b.id,
-        name: e.name,
-        phone: atob(e.phone),
-        active: true,
-        schedule: {}
-      }))
-    );
+    const sucursalName = req.query.sucursal as string;
 
     if (vendorId) {
-      const v = vendors.find(x => x.id === vendorId);
+      const v = getVendorById(vendorId);
       if (!v) return res.status(404).json({ error: "not_found" });
       return res.status(200).json(v);
     }
 
-    if (brandId) vendors = vendors.filter(v => v.brand_id === brandId);
-    return res.status(200).json(vendors);
+    if (brandId) return res.status(200).json(getVendorsByBrand(brandId, sucursalName));
+    return res.status(200).json(getAllVendors());
   }
 
-  if (["POST", "PUT", "DELETE"].includes(req.method)) {
-    return res.status(501).json({ error: "read_only_mode" });
+  if (req.method === "POST") {
+    const { brand_id, sucursal_name, name, phone, active, schedule } = req.body || {};
+    if (!brand_id || !name || !phone) {
+      return res.status(400).json({ error: "brand_id_name_phone_required" });
+    }
+    const id = `${brand_id}-${name}-${Date.now()}`;
+    const vendor = createVendor({
+      id, brand_id, sucursal_name: sucursal_name || "",
+      name, phone, active: active !== false, schedule: schedule || {},
+    });
+    return res.status(201).json(vendor);
+  }
+
+  if (req.method === "PUT") {
+    const { id, ...data } = req.body || {};
+    if (!id) return res.status(400).json({ error: "id_required" });
+    const vendor = updateVendor(id, data);
+    if (!vendor) return res.status(404).json({ error: "not_found" });
+    return res.status(200).json(vendor);
+  }
+
+  if (req.method === "DELETE") {
+    const { id } = req.body || {};
+    if (!id) return res.status(400).json({ error: "id_required" });
+    const ok = deleteVendor(id);
+    if (!ok) return res.status(404).json({ error: "not_found" });
+    return res.status(200).json({ ok: true });
   }
 
   return res.status(405).json({ error: "method_not_allowed" });

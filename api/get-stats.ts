@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { verifyToken } from "./_lib/auth";
-import { getAllEvents } from "./_lib/store";
+import { getAllEvents, getAllVendors } from "./_lib/store";
 import { getAllBrands, getBrandBySlug, getBrandEmployees } from "./_lib/brands-data";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
@@ -20,11 +20,15 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   if (brandSlug) {
     const brand = getBrandBySlug(brandSlug);
     if (!brand) return res.status(404).json({ error: "brand_not_found" });
-    vendors = getBrandEmployees(brand).map(e => ({ id: e.name, name: e.name }));
+    const staticVendors = getBrandEmployees(brand).map(e => ({ id: e.name, name: e.name }));
+    const storeVendors = getAllVendors().filter(v => v.brand_id === brand.id).map(v => ({ id: v.name, name: v.name }));
+    vendors = [...new Map([...storeVendors, ...staticVendors].map(v => [v.id, v])).values()];
     filteredEvents = allEvents.filter(e => e.brand_id === brand.id);
   } else {
     const allBrands = getAllBrands();
-    vendors = allBrands.flatMap(b => getBrandEmployees(b).map(e => ({ id: e.name, name: e.name })));
+    const staticVendors = allBrands.flatMap(b => getBrandEmployees(b).map(e => ({ id: e.name, name: e.name })));
+    const storeVendors = getAllVendors().map(v => ({ id: v.name, name: v.name }));
+    vendors = [...new Map([...storeVendors, ...staticVendors].map(v => [v.id, v])).values()];
   }
 
   const counts: Record<string, number> = {};

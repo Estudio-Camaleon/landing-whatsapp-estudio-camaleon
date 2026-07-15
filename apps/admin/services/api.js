@@ -81,6 +81,24 @@ export async function listEvents(filters = {}) {
   return req(`/api/events?${params.toString()}`)
 }
 
+// ─── Sucursales ───
+export async function listSucursales(brandId) {
+  const query = brandId ? `?brand_id=${brandId}` : ""
+  return req(`/api/sucursales${query}`)
+}
+
+export async function createSucursal(data) {
+  return req("/api/sucursales", { method: "POST", body: JSON.stringify(data) })
+}
+
+export async function updateSucursal(data) {
+  return req("/api/sucursales", { method: "PUT", body: JSON.stringify(data) })
+}
+
+export async function deleteSucursal(brandId, name) {
+  return req("/api/sucursales", { method: "DELETE", body: JSON.stringify({ brand_id: brandId, name }) })
+}
+
 // ─── Upload ───
 export async function uploadAsset(brandId, assetType, fileBase64, mimeType) {
   return req("/api/upload-asset", {

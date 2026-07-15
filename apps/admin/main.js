@@ -2,6 +2,7 @@ import {
   getStats,
   listBrands, createBrand, updateBrand, deleteBrand,
   listVendors, createVendor, updateVendor, deleteVendor,
+  listSucursales, createSucursal, updateSucursal, deleteSucursal,
   listEvents,
   uploadAsset
 } from "./services/api.js"
@@ -14,6 +15,7 @@ if (!localStorage.getItem(TOKEN_KEY)) {
 // ─── State ───
 let brands = []
 let vendors = []
+let sucursales = []
 let currentBrandId = ""
 
 // ─── Navigation ───
@@ -33,6 +35,7 @@ function renderSection(section) {
   container.innerHTML = ""
   if (section === "dashboard") renderDashboard(container)
   else if (section === "brands") renderBrands(container)
+  else if (section === "sucursales") renderSucursales(container)
   else if (section === "vendors") renderVendors(container)
   else if (section === "events") renderEvents(container)
 }
@@ -235,10 +238,108 @@ async function brandForm(brandId) {
   }
 }
 
+// ─── SUCURSALES ───
+async function renderSucursales(container) {
+  sucursales = await listSucursales()
+  brands = await listBrands()
+
+  const brandOpts = brands.map(b => `<option value="${b.id}">${b.name}</option>`).join("")
+
+  container.innerHTML = `
+    <div class="section-header">
+      <h2>Sucursales</h2>
+      <button class="btn btn-primary" id="btn-add-sucursal">+ Nueva sucursal</button>
+    </div>
+    <div class="table-wrap"><div class="empty">Cargando...</div></div>
+  `
+
+  const wrap = container.querySelector(".table-wrap")
+
+  if (sucursales.length === 0) {
+    wrap.innerHTML = "<div class='empty'>No hay sucursales registradas</div>"
+  } else {
+    const brandMap = {}
+    brands.forEach(b => brandMap[b.id] = b.name)
+
+    wrap.innerHTML = `
+      <table>
+        <thead><tr><th>Nombre</th><th>Dirección</th><th>Marca</th><th></th></tr></thead>
+        <tbody>
+          ${sucursales.map(s => `<tr>
+            <td><strong>${s.name}</strong></td>
+            <td style="color:rgba(255,255,255,0.4)">${s.address || "—"}</td>
+            <td style="color:rgba(255,255,255,0.4)">${brandMap[s.brand_id] || "—"}</td>
+            <td class="actions">
+              <button class="btn btn-sm btn-ghost" data-edit="${s.brand_id}::${s.name}">Editar</button>
+              <button class="btn btn-sm btn-danger" data-del="${s.brand_id}::${s.name}">Eliminar</button>
+            </td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    `
+  }
+
+  document.getElementById("btn-add-sucursal").onclick = () => sucursalForm()
+
+  wrap.querySelectorAll("[data-edit]").forEach(btn => {
+    btn.onclick = () => {
+      const [bid, name] = btn.dataset.edit.split("::")
+      sucursalForm(bid, name)
+    }
+  })
+  wrap.querySelectorAll("[data-del]").forEach(btn => {
+    btn.onclick = async () => {
+      const [bid, name] = btn.dataset.del.split("::")
+      if (!confirm(`¿Eliminar sucursal "${name}"?`)) return
+      await deleteSucursal(bid, name)
+      renderSucursales(container)
+    }
+  })
+}
+
+async function sucursalForm(brandId, sucursalName) {
+  const isEdit = !!sucursalName
+  const existing = isEdit ? sucursales.find(s => s.brand_id === brandId && s.name === sucursalName) : null
+  const brandOpts = brands.map(b =>
+    `<option value="${b.id}" ${existing && existing.brand_id === b.id ? "selected" : ""}>${b.name}</option>`
+  ).join("")
+
+  const modal = showModal(`
+    <h3>${isEdit ? "Editar sucursal" : "Nueva sucursal"}</h3>
+    <label>Nombre</label>
+    <input type="text" id="f-s-name" value="${existing?.name || ""}" required>
+    <label>Dirección</label>
+    <input type="text" id="f-s-address" value="${existing?.address || ""}" placeholder="Dirección / ubicación">
+    <label>Marca</label>
+    <select id="f-s-brand">${brandOpts}</select>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="btn-modal-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="btn-modal-save">${isEdit ? "Guardar" : "Crear"}</button>
+    </div>
+  `)
+
+  modal.querySelector("#btn-modal-cancel").onclick = () => modal.closest(".modal-overlay").remove()
+  modal.querySelector("#btn-modal-save").onclick = async () => {
+    const name = modal.querySelector("#f-s-name").value.trim()
+    const address = modal.querySelector("#f-s-address").value.trim()
+    const brand_id = modal.querySelector("#f-s-brand").value
+    if (!name || !brand_id) return
+
+    if (isEdit) {
+      await updateSucursal({ brand_id: existing.brand_id, name: sucursalName, name, address })
+    } else {
+      await createSucursal({ brand_id, name, address })
+    }
+    modal.closest(".modal-overlay").remove()
+    renderSucursales(document.getElementById("section-content"))
+  }
+}
+
 // ─── VENDORS ───
 async function renderVendors(container) {
   vendors = await listVendors()
   brands = await listBrands()
+  sucursales = await listSucursales()
 
   const brandOpts = brands.map(b => `<option value="${b.id}">${b.name}</option>`).join("")
 
@@ -281,7 +382,7 @@ function renderVendorsTable(container) {
 
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>Nombre</th><th>Teléfono</th><th>Marca</th><th>Estado</th><th>Horario</th><th></th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Teléfono</th><th>Marca</th><th>Sucursal</th><th>Estado</th><th>Horario</th><th></th></tr></thead>
       <tbody>
         ${filtered.map(v => {
           const schedule = v.schedule || {}
@@ -290,6 +391,7 @@ function renderVendorsTable(container) {
             <td><strong>${v.name}</strong></td>
             <td>${v.phone}</td>
             <td style="color:rgba(255,255,255,0.4)">${brandMap[v.brand_id] || "—"}</td>
+            <td style="color:rgba(255,255,255,0.4)">${v.sucursal_name || "—"}</td>
             <td><span class="badge ${v.active ? "badge-green" : "badge-warning"}">${v.active ? "Activo" : "Suspendido"}</span></td>
             <td style="font-size:0.8rem;color:rgba(255,255,255,0.4)">${hasSchedule ? "Configurado" : "Sin horario"}</td>
             <td class="actions">
@@ -356,6 +458,13 @@ async function vendorForm(vendorId) {
     `<option value="${b.id}" ${vendor && vendor.brand_id === b.id ? "selected" : ""}>${b.name}</option>`
   ).join("")
 
+  const filteredSucursales = vendor
+    ? sucursales.filter(s => s.brand_id === vendor.brand_id)
+    : sucursales
+  const sucursalOpts = filteredSucursales.map(s =>
+    `<option value="${s.name}" ${vendor && vendor.sucursal_name === s.name ? "selected" : ""}>${s.name}</option>`
+  ).join("")
+
   const modal = showModal(`
     <h3>${isEdit ? "Editar vendedor" : "Nuevo vendedor"}</h3>
     <label>Nombre</label>
@@ -364,6 +473,11 @@ async function vendorForm(vendorId) {
     <input type="text" id="f-v-phone" value="${vendor?.phone || ""}" placeholder="5493815272820" required>
     <label>Marca</label>
     <select id="f-v-brand">${brandOpts}</select>
+    <label>Sucursal</label>
+    <select id="f-v-sucursal">
+      <option value="">Sin sucursal</option>
+      ${sucursalOpts}
+    </select>
     <label>Activo</label>
     <select id="f-v-active">
       <option value="true" ${vendor && vendor.active ? "selected" : ""}>Sí</option>
@@ -376,6 +490,15 @@ async function vendorForm(vendorId) {
       <button class="btn btn-primary" id="btn-modal-save">${isEdit ? "Guardar" : "Crear"}</button>
     </div>
   `)
+
+  modal.querySelector("#f-v-brand").onchange = () => {
+    const bid = modal.querySelector("#f-v-brand").value
+    const filtered = sucursales.filter(s => s.brand_id === bid)
+    const sel = modal.querySelector("#f-v-sucursal")
+    sel.innerHTML = "<option value=''>Sin sucursal</option>" + filtered.map(s =>
+      `<option value="${s.name}">${s.name}</option>`
+    ).join("")
+  }
 
   // Toggle time inputs on checkbox change
   modal.querySelectorAll(".sched-active").forEach(cb => {
@@ -409,6 +532,7 @@ async function vendorForm(vendorId) {
 
     const data = {
       brand_id,
+      sucursal_name: modal.querySelector("#f-v-sucursal").value,
       name,
       phone,
       active: modal.querySelector("#f-v-active").value === "true",

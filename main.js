@@ -429,42 +429,33 @@ function attachPageTransition(card) {
   });
 }
 
-var STORE_ICONS = {
-  maggiestore: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
-  aventus: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>',
-  tuslibrosya: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>'
-};
+var STORE_ICONS = [
+  '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+  '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>',
+  '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+  '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+];
 
-var STORE_DESCS = {
-  maggiestore: "Indumentaria y accesorios",
-  aventus: "Perfumería de diseño",
-  tuslibrosya: "Librería y papelería"
-};
-
-var STORE_BADGE = {
-  maggiestore: "Ropa",
-  aventus: "Perfumes",
-  tuslibrosya: "Libros"
-};
-
-function renderStoreSelector() {
-  var stores = CONFIG.stores || [];
+async function renderStoreSelector() {
   var grid = document.getElementById("stores-grid");
   grid.innerHTML = "";
 
-  var brandMap = window.__brands || {};
-  var brandById = {};
-  for (var key in brandMap) {
-    var b = brandMap[key];
-    if (b.id) brandById[b.id] = b;
+  var stores;
+  try {
+    var res = await fetch("/api/public-brands");
+    if (res.ok) stores = await res.json();
+  } catch (e) {}
+
+  if (!stores || stores.length === 0) {
+    stores = CONFIG.stores || [];
   }
 
-  stores.forEach(function(store) {
-    var info = brandById[store.slug] || {};
-    var theme = THEMES[info.theme] || THEMES.indumentaria;
+  stores.forEach(function(store, i) {
+    var theme = THEMES[store.theme] || THEMES.indumentaria;
     var mainColor = theme.orb1.match(/#[a-f0-9]{6}/i);
     mainColor = mainColor ? mainColor[0] : "#667eea";
     var slug = store.slug;
+    var iconSvg = STORE_ICONS[i % STORE_ICONS.length];
 
     var card = document.createElement("a");
     card.className = "store-card";
@@ -481,7 +472,7 @@ function renderStoreSelector() {
 
     var icon = document.createElement("div");
     icon.className = "store-card-icon";
-    icon.innerHTML = STORE_ICONS[slug] || STORE_ICONS.tuslibrosya;
+    icon.innerHTML = iconSvg;
     card.appendChild(icon);
 
     var infoWrap = document.createElement("div");
@@ -492,16 +483,11 @@ function renderStoreSelector() {
     nameEl.textContent = store.name;
     infoWrap.appendChild(nameEl);
 
-    var desc = document.createElement("span");
-    desc.className = "store-card-desc";
-    desc.textContent = STORE_DESCS[slug] || "";
-    infoWrap.appendChild(desc);
-
     card.appendChild(infoWrap);
 
     var badge = document.createElement("span");
     badge.className = "store-card-badge";
-    badge.textContent = STORE_BADGE[slug] || store.theme;
+    badge.textContent = store.theme.charAt(0).toUpperCase() + store.theme.slice(1);
     card.appendChild(badge);
 
     var arrow = document.createElement("span");
@@ -525,7 +511,7 @@ async function init() {
     document.title = CONFIG.title || "WhatsApp Landing";
     initParticles();
     initMouseGlow();
-    renderStoreSelector();
+    await renderStoreSelector();
     setTimeout(hideLoading, 800);
     return;
   }

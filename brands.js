@@ -4,11 +4,7 @@ const BRANDS = {
     id: "selector",
     title: "WhatsApp Landing",
     heading: "Elegí tu tienda",
-    stores: [
-      { name: "MaggieStore", slug: "maggiestore", theme: "indumentaria" },
-      { name: "Aventus", slug: "aventus", theme: "perfumes" },
-      { name: "TusLibrosYa", slug: "tuslibrosya", theme: "libreria" }
-    ],
+    stores: [],
     cardPadding: "48px 40px 40px",
     logoMarginBottom: "0px",
     headingMarginBottom: "28px",

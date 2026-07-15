@@ -331,6 +331,12 @@ async function loadBrandAssets() {
 async function renderBrandSelector() {
   document.getElementById("card-brand").style.display = "none";
 
+  var body = document.body;
+  body.style.background = "linear-gradient(135deg, #0f0c29 0%, #1a1a3e 30%, #302b63 60%, #24243e 100%)";
+  body.style.backgroundSize = "cover";
+  body.style.backgroundPosition = "center";
+  body.style.backgroundAttachment = "fixed";
+
   var container = document.getElementById("store-selector");
   if (!container) {
     container = document.createElement("div");

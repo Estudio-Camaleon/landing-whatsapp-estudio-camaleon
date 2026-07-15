@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "nodeVersion": "20.x",
   "rewrites": [
     {
       "source": "/assign-vendor",
@@ -25,10 +26,5 @@
       "source": "/(.*)",
       "destination": "/$1"
     }
-  ],
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "nodejs@20.x"
-    }
-  }
+  ]
 }

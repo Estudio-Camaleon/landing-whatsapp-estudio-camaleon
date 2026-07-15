@@ -80,6 +80,7 @@ function updateSucursalState() {
 // ─── Themes ──────────────────────────────────────────────────
 const THEMES = {
   perfumes: {
+    accent: "#7c3aed",
     background: "linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 30%, #4a1942 70%, #8b5a2b 100%)",
     cardBg: "rgba(20, 5, 40, 0.5)",
     cardBorder: "rgba(255, 215, 0, 0.12)",
@@ -89,6 +90,7 @@ const THEMES = {
     orb3: "radial-gradient(circle, #ec4899 0%, transparent 70%)"
   },
   libreria: {
+    accent: "#d97706",
     background: "linear-gradient(135deg, #1a1a2e 0%, #2d2d44 30%, #3d2b1f 70%, #5c4033 100%)",
     cardBg: "rgba(25, 20, 15, 0.5)",
     cardBorder: "rgba(255, 255, 255, 0.07)",
@@ -98,6 +100,7 @@ const THEMES = {
     orb3: "radial-gradient(circle, #fbbf24 0%, transparent 70%)"
   },
   indumentaria: {
+    accent: "#00c9fd",
     background: "linear-gradient(135deg, #0f0c29 0%, #1a1a3e 30%, #302b63 60%, #24243e 100%)",
     cardBg: "rgba(10, 10, 30, 0.5)",
     cardBorder: "rgba(0, 201, 253, 0.12)",
@@ -325,11 +328,118 @@ async function loadBrandAssets() {
   } catch (e) {}
 }
 
+async function renderBrandSelector() {
+  document.getElementById("card-brand").style.display = "none";
+
+  var container = document.getElementById("store-selector");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "store-selector";
+    container.className = "store-selector";
+    document.querySelector(".main-content").appendChild(container);
+  }
+  container.style.display = "block";
+  container.innerHTML =
+    '<h1 class="selector-heading">Elegí tu tienda</h1>' +
+    '<p class="selector-sub">Seleccioná una marca para hablar con un vendedor</p>' +
+    '<div class="stores-grid" id="stores-grid"></div>';
+
+  var grid = document.getElementById("stores-grid");
+  grid.innerHTML =
+    '<div class="selector-loader"><div class="spinner" style="width:32px;height:32px;border-width:3px"></div></div>';
+
+  function transitionTo(url) {
+    var transition = document.createElement("div");
+    transition.className = "page-transition";
+    document.body.appendChild(transition);
+    requestAnimationFrame(function() {
+      transition.classList.add("active");
+    });
+    setTimeout(function() {
+      window.location.href = url;
+    }, 500);
+  }
+
+  try {
+    var res = await fetch("/api/public-brands");
+    if (!res.ok) throw new Error("fetch failed");
+    var brands = await res.json();
+    grid.innerHTML = "";
+    brands.forEach(function(b, i) {
+      var card = document.createElement("a");
+      card.className = "store-card";
+      card.href = "?brand=" + encodeURIComponent(b.slug || b.id);
+      var accent = b.accent || "#667eea";
+      card.style.setProperty("--store-accent", accent);
+      card.style.animationDelay = (0.1 + i * 0.12) + "s";
+
+      var iconHtml = b.logo
+        ? '<img class="store-card-logo" src="' + escapeHtml(b.logo) + '" alt="' + escapeHtml(b.name) + '" loading="lazy" style="' +
+          (b.logoWidth ? 'max-width:' + b.logoWidth + ';' : '') +
+          (b.logoHeight ? 'max-height:' + b.logoHeight + ';' : '') + '">'
+        : '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
+
+      var themeLabel = (b.theme || "").charAt(0).toUpperCase() + (b.theme || "").slice(1);
+
+      card.innerHTML =
+        '<div class="store-card-accent-bar"></div>' +
+        '<div class="store-card-shine"></div>' +
+        '<div class="store-card-icon">' + iconHtml + '</div>' +
+        '<div class="store-card-info"><span class="store-card-name">' + escapeHtml(b.name || b.id) + '</span></div>' +
+        '<span class="store-card-badge">' + themeLabel + '</span>' +
+        '<span class="store-card-arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>';
+
+      card.addEventListener("click", function(e) {
+        e.preventDefault();
+        transitionTo(card.href);
+      });
+
+      grid.appendChild(card);
+    });
+  } catch (e) {
+    grid.innerHTML = '<p style="color:var(--text-muted);padding:20px">No hay tiendas disponibles</p>';
+  }
+
+  setTimeout(hideLoading, 800);
+}
+
+function escapeHtml(str) {
+  var d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
 async function init() {
-  // ─── Normal Brand Mode ────────────────────────────────
-  var brandName = window.location.hostname.replace(/^www\./, "").toLowerCase();
   var params = new URLSearchParams(window.location.search);
-  if (params.get("brand")) brandName = params.get("brand");
+  var brandParam = params.get("brand");
+
+  // ─── Brand Selector Mode (root URL) ──────────────────
+  if (!brandParam && CONFIG && CONFIG.id === "default") {
+    var cleanHost = window.location.hostname.replace(/^www\./, "").toLowerCase();
+    var hasSpecificHost = false;
+    for (var k in window.__brands) {
+      if (k !== "default" && k === cleanHost) { hasSpecificHost = true; break; }
+    }
+    if (!hasSpecificHost) {
+      document.title = CONFIG.title || "WhatsApp Landing";
+      renderBrandSelector();
+      return;
+    }
+  }
+
+  // ─── Dynamic brand via API (not in brands.js) ────────
+  if (brandParam && CONFIG && CONFIG.id !== brandParam) {
+    try {
+      var res = await fetch("/api/brand-config?slug=" + encodeURIComponent(brandParam) + "&full=true");
+      if (res.ok) {
+        var data = await res.json();
+        CONFIG = { ...CONFIG, ...data };
+      }
+    } catch (e) {}
+  }
+
+  // ─── Normal Brand Mode ────────────────────────────────
+  var brandName = brandParam || window.location.hostname.replace(/^www\./, "").toLowerCase();
   await loadBrandAssets();
 
   __secLog("INFO", "P\u00E1gina cargada", {

@@ -1,21 +1,41 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getBrandByDomain, getBrandBySlug } from "./_lib/brands-data";
+import { getBrandBySlug, getBrandByDomain, getBrandById } from "./_lib/store";
+import { getSucursalesByBrand } from "./_lib/store";
+import { getVendorsByBrand } from "./_lib/store";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   const slug = req.query.slug as string;
   const host = req.headers["host"] || "";
+  const full = req.query.full !== undefined;
 
-  let brand = slug ? getBrandBySlug(slug) : null;
+  let brand = slug ? (getBrandBySlug(slug) || getBrandById(slug)) : null;
   if (!brand) brand = getBrandByDomain(host);
 
   if (!brand) {
     return res.status(404).json({ error: "brand_not_found" });
   }
 
+  if (full) {
+    const sucursales = getSucursalesByBrand(brand.id);
+    const vendors = getVendorsByBrand(brand.id);
+    return res.status(200).json({
+      ...brand,
+      sucursales: sucursales.map(s => ({
+        ...s,
+        employees: vendors
+          .filter(v => v.sucursal_name === s.name)
+          .map(v => ({ name: v.name, phone: v.phone })),
+      })),
+      employees: vendors
+        .filter(v => !v.sucursal_name)
+        .map(v => ({ name: v.name, phone: v.phone })),
+    });
+  }
+
   return res.status(200).json({
-    slug: brand.id,
+    slug: brand.slug || brand.id,
     logo_url: brand.logo || null,
     background_url: brand.background || null,
-    background_mobile_url: brand.backgroundMobile || null
+    background_mobile_url: brand.backgroundMobile || null,
   });
 };

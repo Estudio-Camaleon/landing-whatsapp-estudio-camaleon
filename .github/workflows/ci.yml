@@ -76,7 +76,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - run: npm ci
+      - name: Link Vercel project
+        run: npx vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel
         run: npx vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}

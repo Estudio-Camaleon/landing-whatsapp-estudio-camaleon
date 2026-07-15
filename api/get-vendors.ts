@@ -1,10 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { verifyToken } from "./_lib/auth";
-
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { getBrandByDomain, getBrandBySlug, getDefaultBrand } from "./_lib/brands-data";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   const authHeader = (req.headers["authorization"] as string) || "";
@@ -17,26 +13,18 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const host = req.headers["host"] || "";
   const brandSlug = req.query.brand as string;
 
-  let brand = null;
+  let brand = brandSlug ? getBrandBySlug(brandSlug) : null;
+  if (!brand) brand = getBrandByDomain(host);
+  if (!brand) brand = getDefaultBrand();
 
-  if (brandSlug) {
-    const { data } = await supabase
-      .from("brands").select("*").eq("slug", brandSlug).single();
-    brand = data;
-  }
+  const vendors = brand.employees.map((e, i) => ({
+    id: i + 1,
+    brand_id: brand.id,
+    name: e.name,
+    phone: atob(e.phone),
+    active: true,
+    schedule: {}
+  }));
 
-  if (!brand) {
-    const { data } = await supabase
-      .from("brands").select("*").eq("domain", host).single();
-    brand = data;
-  }
-
-  if (!brand) {
-    return res.status(404).json({ error: "brand_not_found" });
-  }
-
-  const { data: vendors } = await supabase
-    .from("vendors").select("*").eq("brand_id", brand.id);
-
-  return res.status(200).json(vendors || []);
+  return res.status(200).json(vendors);
 };

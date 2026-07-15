@@ -12,9 +12,6 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
-  },
   "devDependencies": {
     "@vercel/node": "^3.0.0",
     "vitest": "^1.6.0"

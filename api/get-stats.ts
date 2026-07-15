@@ -1,10 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { verifyToken } from "./_lib/auth";
-
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { getAllEvents } from "./_lib/store";
+import { getAllBrands, getBrandBySlug } from "./_lib/brands-data";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   const authHeader = (req.headers["authorization"] as string) || "";
@@ -15,40 +12,30 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   const brandSlug = req.query.brand as string;
+  const allEvents = getAllEvents();
 
-  let vendors: any[] | null = null;
-  let events: any[] | null = null;
+  let filteredEvents = allEvents;
+  let vendors: { id: string; name: string }[] = [];
 
   if (brandSlug) {
-    const { data: brand } = await supabase
-      .from("brands").select("*").eq("slug", brandSlug).single();
-    if (!brand) {
-      return res.status(404).json({ error: "brand_not_found" });
-    }
-    const v = await supabase.from("vendors").select("id, name").eq("brand_id", brand.id);
-    vendors = v.data;
-    const e = await supabase.from("events").select("vendor_id").eq("brand_id", brand.id);
-    events = e.data;
+    const brand = getBrandBySlug(brandSlug);
+    if (!brand) return res.status(404).json({ error: "brand_not_found" });
+    vendors = brand.employees.map(e => ({ id: e.name, name: e.name }));
+    filteredEvents = allEvents.filter(e => e.brand_id === brand.id);
   } else {
-    const v = await supabase.from("vendors").select("id, name");
-    vendors = v.data;
-    const e = await supabase.from("events").select("vendor_id");
-    events = e.data;
+    const allBrands = getAllBrands();
+    vendors = allBrands.flatMap(b => b.employees.map(e => ({ id: e.name, name: e.name })));
   }
 
   const counts: Record<string, number> = {};
-  if (events) {
-    events.forEach(e => {
-      counts[e.vendor_id] = (counts[e.vendor_id] || 0) + 1;
-    });
-  }
+  filteredEvents.forEach(e => {
+    counts[e.vendor_id] = (counts[e.vendor_id] || 0) + 1;
+  });
 
   const stats: Record<string, number> = {};
-  if (vendors) {
-    vendors.forEach(v => {
-      stats[v.name] = counts[v.id] || 0;
-    });
-  }
+  vendors.forEach(v => {
+    stats[v.name] = counts[v.id] || 0;
+  });
 
   return res.status(200).json(stats);
 };

@@ -275,6 +275,128 @@ async function loadBrandAssets() {
   } catch (e) {}
 }
 
+// ─── Mouse Glow ──────────────────────────────────────────────
+function initMouseGlow() {
+  var glow = document.createElement("div");
+  glow.className = "mouse-glow";
+  document.body.appendChild(glow);
+  var raf = null;
+  var mx = -999, my = -999;
+
+  document.addEventListener("mousemove", function(e) {
+    mx = e.clientX;
+    my = e.clientY;
+    if (!raf) {
+      raf = requestAnimationFrame(function() {
+        glow.style.transform = "translate(" + mx + "px, " + my + "px) translate(-50%, -50%)";
+        raf = null;
+      });
+    }
+  });
+
+  document.addEventListener("mouseleave", function() {
+    glow.style.opacity = "0";
+  });
+
+  document.addEventListener("mouseenter", function() {
+    glow.style.opacity = "1";
+  });
+}
+
+// ─── Particles ───────────────────────────────────────────────
+function initParticles() {
+  var container = document.createElement("div");
+  container.className = "particles-container";
+  for (var i = 0; i < 10; i++) {
+    var p = document.createElement("div");
+    p.className = "particle";
+    container.appendChild(p);
+  }
+  document.body.appendChild(container);
+}
+
+// ─── Tilt Effect ─────────────────────────────────────────────
+function attachTilt(card) {
+  var bounds, cx, cy;
+
+  function onEnter() {
+    bounds = card.getBoundingClientRect();
+    cx = bounds.left + bounds.width / 2;
+    cy = bounds.top + bounds.height / 2;
+  }
+
+  function onMove(e) {
+    var x = e.clientX - cx;
+    var y = e.clientY - cy;
+    var rotY = (x / (bounds.width / 2)) * 6;
+    var rotX = -(y / (bounds.height / 2)) * 6;
+    card.style.transform =
+      "perspective(800px) rotateX(" + rotX + "deg) rotateY(" + rotY + "deg) translateY(-4px) scale(1.02)";
+  }
+
+  function onLeave() {
+    card.style.transform = "";
+  }
+
+  card.addEventListener("mouseenter", onEnter, { passive: true });
+  card.addEventListener("mousemove", onMove, { passive: true });
+  card.addEventListener("mouseleave", onLeave, { passive: true });
+}
+
+// ─── Ripple ──────────────────────────────────────────────────
+function attachRipple(card) {
+  card.addEventListener("click", function(e) {
+    var rect = card.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+    var size = Math.max(rect.width, rect.height) * 2;
+    var ripple = document.createElement("span");
+    ripple.className = "ripple";
+    ripple.style.width = ripple.style.height = size + "px";
+    ripple.style.left = x - size / 2 + "px";
+    ripple.style.top = y - size / 2 + "px";
+    card.appendChild(ripple);
+    setTimeout(function() { ripple.remove(); }, 700);
+  });
+}
+
+// ─── Page Transition ─────────────────────────────────────────
+function attachPageTransition(card) {
+  var href = card.getAttribute("href");
+  card.addEventListener("click", function(e) {
+    e.preventDefault();
+    var accent = getComputedStyle(card).getPropertyValue("--store-accent").trim() || "#667eea";
+    var overlay = document.createElement("div");
+    overlay.className = "page-transition";
+    overlay.style.setProperty("--store-accent", accent);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function() {
+      overlay.classList.add("active");
+    });
+    setTimeout(function() {
+      window.location.href = href;
+    }, 500);
+  });
+}
+
+var STORE_ICONS = {
+  maggiestore: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+  aventus: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>',
+  tuslibrosya: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>'
+};
+
+var STORE_DESCS = {
+  maggiestore: "Indumentaria y accesorios",
+  aventus: "Perfumería de diseño",
+  tuslibrosya: "Librería y papelería"
+};
+
+var STORE_BADGE = {
+  maggiestore: "Ropa",
+  aventus: "Perfumes",
+  tuslibrosya: "Libros"
+};
+
 function renderStoreSelector() {
   var stores = CONFIG.stores || [];
   var grid = document.getElementById("stores-grid");
@@ -292,35 +414,54 @@ function renderStoreSelector() {
     var theme = THEMES[info.theme] || THEMES.indumentaria;
     var mainColor = theme.orb1.match(/#[a-f0-9]{6}/i);
     mainColor = mainColor ? mainColor[0] : "#667eea";
+    var slug = store.slug;
 
     var card = document.createElement("a");
     card.className = "store-card";
-    card.href = "?brand=" + store.slug;
+    card.href = "?brand=" + slug;
     card.style.setProperty("--store-accent", mainColor);
+
+    var accentBar = document.createElement("div");
+    accentBar.className = "store-card-accent-bar";
+    card.appendChild(accentBar);
+
+    var shine = document.createElement("div");
+    shine.className = "store-card-shine";
+    card.appendChild(shine);
 
     var icon = document.createElement("div");
     icon.className = "store-card-icon";
-    icon.innerHTML = info.id === "maggiestore"
-      ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>'
-      : info.id === "aventus"
-      ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
-      : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>';
+    icon.innerHTML = STORE_ICONS[slug] || STORE_ICONS.tuslibrosya;
     card.appendChild(icon);
+
+    var infoWrap = document.createElement("div");
+    infoWrap.className = "store-card-info";
 
     var nameEl = document.createElement("span");
     nameEl.className = "store-card-name";
     nameEl.textContent = store.name;
-    card.appendChild(nameEl);
+    infoWrap.appendChild(nameEl);
 
-    var themeEl = document.createElement("span");
-    themeEl.className = "store-card-theme";
-    themeEl.textContent = store.theme.charAt(0).toUpperCase() + store.theme.slice(1);
-    card.appendChild(themeEl);
+    var desc = document.createElement("span");
+    desc.className = "store-card-desc";
+    desc.textContent = STORE_DESCS[slug] || "";
+    infoWrap.appendChild(desc);
+
+    card.appendChild(infoWrap);
+
+    var badge = document.createElement("span");
+    badge.className = "store-card-badge";
+    badge.textContent = STORE_BADGE[slug] || store.theme;
+    card.appendChild(badge);
 
     var arrow = document.createElement("span");
     arrow.className = "store-card-arrow";
     arrow.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
     card.appendChild(arrow);
+
+    attachRipple(card);
+    attachTilt(card);
+    attachPageTransition(card);
 
     grid.appendChild(card);
   });
@@ -332,6 +473,8 @@ async function init() {
     document.getElementById("card-brand").style.display = "none";
     document.getElementById("store-selector").style.display = "block";
     document.title = CONFIG.title || "WhatsApp Landing";
+    initParticles();
+    initMouseGlow();
     renderStoreSelector();
     setTimeout(hideLoading, 800);
     return;

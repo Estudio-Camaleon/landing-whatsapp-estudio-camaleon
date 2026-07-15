@@ -42,10 +42,6 @@ export interface BrandConfig {
 }
 
 const staticBrandData: Record<string, BrandConfig> = {
-  "landing-whatsapp-estudio-camaleon.vercel.app": {
-    id: "selector",
-    heading: "Elegí tu tienda",
-  },
   maggiestore: {
     id: "maggiestore",
     theme: "indumentaria",

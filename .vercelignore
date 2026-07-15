@@ -8,3 +8,5 @@ tests/
 vitest.config.ts
 netlify/
 netlify.toml
+.github/
+.releaserc.json

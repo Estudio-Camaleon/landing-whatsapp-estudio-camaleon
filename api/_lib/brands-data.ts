@@ -32,12 +32,14 @@ export interface BrandConfig {
   logoOverflow?: string;
 }
 
-function getBrandEmployees(brand: BrandConfig, sucursalName?: string): Employee[] {
+export function getBrandEmployees(brand: BrandConfig, sucursalName?: string): Employee[] {
   if (sucursalName && brand.sucursales) {
     const s = brand.sucursales.find(s => s.name === sucursalName);
     if (s) return s.employees;
   }
-  return brand.employees || [];
+  if (brand.employees && brand.employees.length > 0) return brand.employees;
+  if (brand.sucursales) return brand.sucursales.flatMap(s => s.employees);
+  return [];
 }
 
 const brands: Record<string, BrandConfig> = {

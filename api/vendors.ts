@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { verifyToken } from "./_lib/auth";
-import { getAllBrands } from "./_lib/brands-data";
+import { getAllBrands, getBrandEmployees } from "./_lib/brands-data";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   const authHeader = (req.headers["authorization"] as string) || "";
@@ -16,7 +16,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     const allBrands = getAllBrands();
     let vendors = allBrands.flatMap(b =>
-      b.employees.map((e, i) => ({
+      getBrandEmployees(b).map((e, i) => ({
         id: `${b.id}-${i}`,
         brand_id: b.id,
         name: e.name,

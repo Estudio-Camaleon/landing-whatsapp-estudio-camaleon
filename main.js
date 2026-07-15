@@ -275,7 +275,69 @@ async function loadBrandAssets() {
   } catch (e) {}
 }
 
+function renderStoreSelector() {
+  var stores = CONFIG.stores || [];
+  var grid = document.getElementById("stores-grid");
+  grid.innerHTML = "";
+
+  var brandMap = window.__brands || {};
+  var brandById = {};
+  for (var key in brandMap) {
+    var b = brandMap[key];
+    if (b.id) brandById[b.id] = b;
+  }
+
+  stores.forEach(function(store) {
+    var info = brandById[store.slug] || {};
+    var theme = THEMES[info.theme] || THEMES.indumentaria;
+    var mainColor = theme.orb1.match(/#[a-f0-9]{6}/i);
+    mainColor = mainColor ? mainColor[0] : "#667eea";
+
+    var card = document.createElement("a");
+    card.className = "store-card";
+    card.href = "?brand=" + store.slug;
+    card.style.setProperty("--store-accent", mainColor);
+
+    var icon = document.createElement("div");
+    icon.className = "store-card-icon";
+    icon.innerHTML = info.id === "maggiestore"
+      ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>'
+      : info.id === "aventus"
+      ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+      : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>';
+    card.appendChild(icon);
+
+    var nameEl = document.createElement("span");
+    nameEl.className = "store-card-name";
+    nameEl.textContent = store.name;
+    card.appendChild(nameEl);
+
+    var themeEl = document.createElement("span");
+    themeEl.className = "store-card-theme";
+    themeEl.textContent = store.theme.charAt(0).toUpperCase() + store.theme.slice(1);
+    card.appendChild(themeEl);
+
+    var arrow = document.createElement("span");
+    arrow.className = "store-card-arrow";
+    arrow.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    card.appendChild(arrow);
+
+    grid.appendChild(card);
+  });
+}
+
 async function init() {
+  // ─── Store Selector Mode ──────────────────────────────
+  if (CONFIG.id === "selector") {
+    document.getElementById("card-brand").style.display = "none";
+    document.getElementById("store-selector").style.display = "block";
+    document.title = CONFIG.title || "WhatsApp Landing";
+    renderStoreSelector();
+    setTimeout(hideLoading, 800);
+    return;
+  }
+
+  // ─── Normal Brand Mode ────────────────────────────────
   var brandName = window.location.hostname.replace(/^www\./, "").toLowerCase();
   var params = new URLSearchParams(window.location.search);
   if (params.get("brand")) brandName = params.get("brand");

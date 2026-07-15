@@ -1,4 +1,22 @@
 const BRANDS = {
+  // ─── Selector de tiendas (Vercel root) ─────────────────
+  "landing-whatsapp-estudio-camaleon.vercel.app": {
+    id: "selector",
+    title: "WhatsApp Landing",
+    heading: "Elegí tu tienda",
+    stores: [
+      { name: "MaggieStore", slug: "maggiestore", theme: "indumentaria" },
+      { name: "Aventus", slug: "aventus", theme: "perfumes" },
+      { name: "TusLibrosYa", slug: "tuslibrosya", theme: "libreria" }
+    ],
+    cardPadding: "48px 40px 40px",
+    logoMarginBottom: "0px",
+    headingMarginBottom: "28px",
+    sellerMarginBottom: "24px",
+    ctaPadding: "16px 32px",
+    logoOverflow: "visible",
+  },
+
   // ─── Maggiestore (indumentaria) ──────────────────────────
   "maggiestore.com": {
     id: "maggiestore",

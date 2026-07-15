@@ -24,10 +24,57 @@ function detectBrand() {
 }
 
 var CONFIG = detectBrand();
+var SELECTED_SUCURSAL = null;
 
 if (!CONFIG) {
   console.error("[Brand] No hay configuración disponible");
   document.body.innerHTML = "<p style='color:white;text-align:center;padding:40px;font-family:sans-serif;'>Error: No hay configuración de marca</p>";
+}
+
+// ─── Sucursal Selector ──────────────────────────────────────────
+function renderSucursalSelector() {
+  var sucursales = CONFIG.sucursales || [];
+  var container = document.getElementById("sucursal-selector");
+  if (!container || sucursales.length === 0) return;
+
+  container.innerHTML = "";
+
+  if (sucursales.length === 1) {
+    SELECTED_SUCURSAL = sucursales[0].name;
+    updateSucursalState();
+    return;
+  }
+
+  sucursales.forEach(function(s, i) {
+    var btn = document.createElement("button");
+    btn.className = "sucursal-btn";
+    btn.textContent = s.name;
+    btn.title = s.address;
+
+    btn.addEventListener("click", function() {
+      SELECTED_SUCURSAL = s.name;
+      container.querySelectorAll(".sucursal-btn").forEach(function(b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      updateSucursalState();
+    });
+
+    container.appendChild(btn);
+  });
+}
+
+function updateSucursalState() {
+  var btn = document.getElementById("cta-button");
+  var sellerEl = document.getElementById("assigned-seller");
+
+  if (SELECTED_SUCURSAL) {
+    btn.classList.remove("disabled");
+    btn.removeAttribute("aria-disabled");
+    sellerEl.textContent = "Sucursal: " + SELECTED_SUCURSAL;
+    sellerEl.style.display = "";
+  } else {
+    btn.classList.add("disabled");
+    btn.setAttribute("aria-disabled", "true");
+  }
 }
 
 // ─── Themes ──────────────────────────────────────────────────
@@ -230,12 +277,15 @@ function showVendorError() {
 async function handleClick(e) {
   e.preventDefault();
 
+  if (!SELECTED_SUCURSAL) return;
+
   try {
     showLoading();
 
-    var data = await assignVendor();
+    var data = await assignVendor(SELECTED_SUCURSAL);
 
     __secLog("INFO", "Vendedor asignado vía API", {
+      sucursal: SELECTED_SUCURSAL,
       name: data.vendor.name,
       whatsappUrl: data.whatsappUrl
     });
@@ -493,7 +543,8 @@ async function init() {
     referrer: document.referrer || "(directo)"
   });
 
-  var heading = CONFIG.heading || "";
+  var hasSucursales = CONFIG.sucursales && CONFIG.sucursales.length > 0;
+  var heading = hasSucursales ? (CONFIG.heading || "Elegí tu sucursal") : (CONFIG.heading || "");
   var buttonText = CONFIG.buttonText || "";
   var logo = CONFIG.logo || null;
   var logoWidth = CONFIG.logoWidth || null;
@@ -541,6 +592,19 @@ async function init() {
 
   var ctaText = document.getElementById("cta-text");
   ctaText.textContent = buttonText;
+
+  // ─── Sucursal Selector ──────────────────────────────
+  if (hasSucursales) {
+    if (!document.getElementById("sucursal-selector")) {
+      var sel = document.createElement("div");
+      sel.id = "sucursal-selector";
+      sel.className = "sucursal-selector";
+      logoContainer.parentNode.insertBefore(sel, logoContainer);
+    }
+    btn.classList.add("disabled");
+    btn.setAttribute("aria-disabled", "true");
+    renderSucursalSelector();
+  }
 
   btn.addEventListener("click", handleClick);
 

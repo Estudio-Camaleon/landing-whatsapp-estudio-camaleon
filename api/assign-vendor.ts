@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getBrandByDomain, getBrandBySlug, getDefaultBrand } from "./_lib/brands-data";
+import { getBrandByDomain, getBrandBySlug, getDefaultBrand, getBrandEmployees } from "./_lib/brands-data";
 import { addEvent, getRecentEvents, getRotationState, setRotationState } from "./_lib/store";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
@@ -9,6 +9,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
   const host = req.headers["host"] || "";
   const brandSlug = (req.query.brand as string) || null;
+  const sucursalName = (req.query.sucursal as string) || null;
 
   const ip =
     (req.headers["x-forwarded-for"] as string)?.split(",")?.[0]?.trim() ||
@@ -23,6 +24,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     return res.status(503).json({ error: "brand_suspended" });
   }
 
+  if (brand.sucursales && !sucursalName) {
+    return res.status(400).json({ error: "sucursal_required" });
+  }
+
   const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
   const recent = getRecentEvents(brand.id, ip, fiveMinAgo);
 
@@ -33,7 +38,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     });
   }
 
-  const vendors = brand.employees.filter(v => true);
+  const vendors = getBrandEmployees(brand, sucursalName || undefined);
   if (vendors.length === 0) {
     return res.status(500).json({ error: "no_vendors" });
   }

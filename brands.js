@@ -22,7 +22,7 @@ const BRANDS = {
     id: "maggiestore",
     theme: "indumentaria",
     title: "MaggieStore Indumentaria",
-    heading: "Habla con uno de nuestros vendedores",
+    heading: "Elegí tu sucursal",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
     logo: "./media/logo/lg-maggie.svg",
@@ -30,7 +30,10 @@ const BRANDS = {
     logoHeight: "300px",
     background: "./media/background/bg-maggie.png",
     backgroundMobile: "./media/background/bg-mobile-maggie.png",
-    employees: [{ name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" }],
+    employees: [],
+    sucursales: [
+      { name: "Casa Central", address: "San Miguel de Tucumán", employees: [{ name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" }] },
+    ],
     // ─── Espaciado ───────────────────────────────────────
     cardPadding: "48px 40px 40px",
     logoMarginBottom: "0px",
@@ -45,7 +48,7 @@ const BRANDS = {
     id: "aventus",
     theme: "perfumes",
     title: "Aventus Perfumería",
-    heading: "Habla con uno de nuestros vendedores",
+    heading: "Elegí tu sucursal",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
     logo: "./media/logo/lg-aventus.svg",
@@ -53,10 +56,15 @@ const BRANDS = {
     logoHeight: "auto",
     background: "./media/background/bg-aventus.png",
     backgroundMobile: "./media/background/bg-mobile-aventus.png",
-    employees: [
-      { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
-      { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
-      { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+    employees: [],
+    sucursales: [
+      { name: "Casa Central", address: "San Miguel de Tucumán", employees: [
+        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
+        { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
+      ]},
+      { name: "Sucursal Yerba Buena", address: "Yerba Buena", employees: [
+        { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+      ]},
     ],
     // ─── Espaciado ───────────────────────────────────────
     cardPadding: "16px 32px 20px",
@@ -72,7 +80,7 @@ const BRANDS = {
     id: "tuslibrosya",
     theme: "libreria",
     title: "TusLibrosYa! Librería",
-    heading: "Habla con uno de nuestros vendedores",
+    heading: "Elegí tu sucursal",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
     logo: "./media/logo/lg-tuslibrosya.svg",
@@ -80,10 +88,16 @@ const BRANDS = {
     logoHeight: "100px",
     background: "./media/background/bg-tuslibrosya.png",
     backgroundMobile: "./media/background/bg-mobile-tuslibrosya.png",
-    employees: [
-      { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
-      { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
-      { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+    employees: [],
+    sucursales: [
+      { name: "Casa Central", address: "San Miguel de Tucumán", employees: [
+        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
+        { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
+      ]},
+      { name: "Sucursal Yerba Buena", address: "Yerba Buena", employees: [
+        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
+        { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+      ]},
     ],
     // ─── Espaciado ───────────────────────────────────────
     cardPadding: "35px 40px 40px",

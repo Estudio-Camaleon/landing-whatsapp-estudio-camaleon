@@ -233,9 +233,93 @@ body {
   50% { box-shadow: 0 8px 32px rgba(37, 211, 102, 0.5); }
 }
 
+.cta-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+  animation: none;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .whatsapp-icon,
 .operator-icon {
   flex-shrink: 0;
+}
+
+/* ─── Sucursal Selector ──────────────────────────────── */
+.sucursal-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 28px;
+  width: 100%;
+}
+
+.sucursal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.sucursal-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.sucursal-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.sucursal-btn.active {
+  background: var(--whatsapp);
+  border-color: var(--whatsapp);
+  color: #fff;
+  box-shadow: 0 4px 16px var(--whatsapp-shadow);
+}
+
+.sucursal-btn.active:hover {
+  background: var(--whatsapp-hover);
+  border-color: var(--whatsapp-hover);
+}
+
+@media (max-width: 480px) {
+  .sucursal-selector {
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .sucursal-btn {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .sucursal-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border-radius: 8px;
+    gap: 4px;
+  }
 }
 
 .footer {

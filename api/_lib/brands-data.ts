@@ -3,6 +3,12 @@ export interface Employee {
   phone: string;
 }
 
+export interface Sucursal {
+  name: string;
+  address: string;
+  employees: Employee[];
+}
+
 export interface BrandConfig {
   id: string;
   theme?: string;
@@ -15,7 +21,8 @@ export interface BrandConfig {
   logoHeight?: string;
   background?: string;
   backgroundMobile?: string;
-  employees: Employee[];
+  employees?: Employee[];
+  sucursales?: Sucursal[];
   active?: boolean;
   cardPadding?: string;
   logoMarginBottom?: string;
@@ -25,18 +32,25 @@ export interface BrandConfig {
   logoOverflow?: string;
 }
 
+function getBrandEmployees(brand: BrandConfig, sucursalName?: string): Employee[] {
+  if (sucursalName && brand.sucursales) {
+    const s = brand.sucursales.find(s => s.name === sucursalName);
+    if (s) return s.employees;
+  }
+  return brand.employees || [];
+}
+
 const brands: Record<string, BrandConfig> = {
   "landing-whatsapp-estudio-camaleon.vercel.app": {
     id: "selector",
     heading: "Elegí tu tienda",
-    employees: [],
   },
 
   "maggiestore.com": {
     id: "maggiestore",
     theme: "indumentaria",
     title: "MaggieStore Indumentaria",
-    heading: "Habla con uno de nuestros vendedores",
+    heading: "Elegí tu sucursal",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
     logo: "./media/logo/lg-maggie.svg",
@@ -44,7 +58,9 @@ const brands: Record<string, BrandConfig> = {
     logoHeight: "300px",
     background: "./media/background/bg-maggie.png",
     backgroundMobile: "./media/background/bg-mobile-maggie.png",
-    employees: [{ name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" }],
+    sucursales: [
+      { name: "Casa Central", address: "San Miguel de Tucumán", employees: [{ name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" }] },
+    ],
     cardPadding: "48px 40px 40px",
     logoMarginBottom: "0px",
     headingMarginBottom: "28px",
@@ -57,7 +73,7 @@ const brands: Record<string, BrandConfig> = {
     id: "aventus",
     theme: "perfumes",
     title: "Aventus Perfumería",
-    heading: "Habla con uno de nuestros vendedores",
+    heading: "Elegí tu sucursal",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
     logo: "./media/logo/lg-aventus.svg",
@@ -65,10 +81,14 @@ const brands: Record<string, BrandConfig> = {
     logoHeight: "auto",
     background: "./media/background/bg-aventus.png",
     backgroundMobile: "./media/background/bg-mobile-aventus.png",
-    employees: [
-      { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
-      { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
-      { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+    sucursales: [
+      { name: "Casa Central", address: "San Miguel de Tucumán", employees: [
+        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
+        { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
+      ]},
+      { name: "Sucursal Yerba Buena", address: "Yerba Buena", employees: [
+        { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+      ]},
     ],
     cardPadding: "16px 32px 20px",
     logoMarginBottom: "10px",
@@ -82,7 +102,7 @@ const brands: Record<string, BrandConfig> = {
     id: "tuslibrosya",
     theme: "libreria",
     title: "TusLibrosYa! Librería",
-    heading: "Habla con uno de nuestros vendedores",
+    heading: "Elegí tu sucursal",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
     logo: "./media/logo/lg-tuslibrosya.svg",
@@ -90,10 +110,15 @@ const brands: Record<string, BrandConfig> = {
     logoHeight: "100px",
     background: "./media/background/bg-tuslibrosya.png",
     backgroundMobile: "./media/background/bg-mobile-tuslibrosya.png",
-    employees: [
-      { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
-      { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
-      { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+    sucursales: [
+      { name: "Casa Central", address: "San Miguel de Tucumán", employees: [
+        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
+        { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
+      ]},
+      { name: "Sucursal Yerba Buena", address: "Yerba Buena", employees: [
+        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
+        { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+      ]},
     ],
     cardPadding: "35px 40px 40px",
     logoMarginBottom: "10px",

@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'Static site - no build required'",
+    "build": "",
     "start": "vercel start",
     "test": "vitest run",
     "test:watch": "vitest"

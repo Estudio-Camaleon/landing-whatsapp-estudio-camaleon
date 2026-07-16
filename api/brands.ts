@@ -24,9 +24,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   if (req.method === "POST") {
-    const { name, slug, domain } = req.body || {};
+    const { name, slug, domain, meta_title, meta_description, og_image, favicon_url } = req.body || {};
     if (!name || !slug) return res.status(400).json({ error: "name_and_slug_required" });
-    const brand = await createBrand({ name, slug, domain: domain || null });
+    const brand = await createBrand({ name, slug, domain: domain || null, meta_title, meta_description, og_image, favicon_url });
     return res.status(201).json(brand);
   }
 

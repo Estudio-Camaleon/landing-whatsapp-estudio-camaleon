@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { verifyToken } from "./_lib/auth";
-import { getSupabase } from "./_lib/supabase";
+import { getSupabaseService } from "./_lib/supabase";
 import { updateBrand } from "./_lib/store";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
@@ -21,16 +21,23 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     return res.status(400).json({ error: "brand_id_asset_type_file_base64_required" });
   }
 
-  const allowedTypes = ["logo", "background", "background_mobile"];
+  const allowedTypes = ["logo", "background", "background_mobile", "favicon", "og_image"];
   if (!allowedTypes.includes(asset_type)) {
-    return res.status(400).json({ error: "asset_type must be logo, background, or background_mobile" });
+    return res.status(400).json({ error: "asset_type must be logo, background, background_mobile, favicon, or og_image" });
   }
 
   const buffer = Buffer.from(file_base64, "base64");
-  const ext = mime_type?.split("/")[1] || "png";
+  const mimeExt: Record<string, string> = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+    "image/svg+xml": "svg",
+    "image/gif": "gif",
+  };
+  const ext = (mime_type && mimeExt[mime_type]) || mime_type?.split("/")[1] || "png";
   const fileName = `${brand_id}/${asset_type}.${ext}`;
 
-  const supabase = getSupabase();
+  const supabase = getSupabaseService();
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from("brand-assets")
     .upload(fileName, buffer, {
@@ -50,6 +57,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     logo: "logo_url",
     background: "background_url",
     background_mobile: "background_mobile_url",
+    favicon: "favicon_url",
+    og_image: "og_image",
   };
   const dbField = urlMap[asset_type];
 

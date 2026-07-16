@@ -180,25 +180,58 @@ async function brandForm(brandId) {
   const isEdit = !!brandId
   const brand = isEdit ? brands.find(b => b.id === brandId) : null
 
+  function imgPreview(url) {
+    return url
+      ? `<div class="upload-preview"><img src="${url}" height="40"><span class="upload-ok">Subido</span></div>`
+      : ""
+  }
+
   const modal = showModal(`
     <h3>${isEdit ? "Editar marca" : "Nueva marca"}</h3>
+
     <label>Nombre</label>
     <input type="text" id="f-brand-name" value="${brand?.name || ""}" required>
+
     <label>Dominio (opcional)</label>
     <input type="text" id="f-brand-domain" value="${brand?.domain || ""}" placeholder="ej: mistore.com">
+
     <label>Slug (opcional)</label>
     <input type="text" id="f-brand-slug" value="${brand?.slug || ""}" placeholder="auto si se deja vacío">
-    ${isEdit ? `
+
+    <hr style="border-color:rgba(255,255,255,0.06);margin:20px 0">
+
+    <h4 style="margin:0 0 12px;color:rgba(255,255,255,0.7);font-size:0.9rem;font-weight:600;">IMÁGENES</h4>
+
     <label>Logo (máx 5 MB)</label>
     <input type="file" id="f-brand-logo" accept="image/*">
-    ${brand?.logo_url ? `<div class="upload-preview"><img src="${brand.logo_url}" height="40"><span class="upload-ok">Subido</span></div>` : ""}
-    <label>Fondo (máx 10 MB)</label>
+    ${imgPreview(brand?.logo_url)}
+
+    <label>Fondo escritorio (máx 10 MB)</label>
     <input type="file" id="f-brand-bg" accept="image/*">
-    ${brand?.background_url ? `<div class="upload-preview"><span class="upload-ok">Subido</span></div>` : ""}
+    ${imgPreview(brand?.background_url)}
+
     <label>Fondo mobile (máx 10 MB)</label>
     <input type="file" id="f-brand-bg-mobile" accept="image/*">
-    ${brand?.background_mobile_url ? `<div class="upload-preview"><span class="upload-ok">Subido</span></div>` : ""}
-    ` : ""}
+    ${imgPreview(brand?.background_mobile_url)}
+
+    <label>Favicon (máx 1 MB)</label>
+    <input type="file" id="f-brand-favicon" accept="image/*">
+    ${imgPreview(brand?.favicon_url)}
+
+    <label>OG Image (máx 5 MB)</label>
+    <input type="file" id="f-brand-og-image" accept="image/*">
+    ${imgPreview(brand?.og_image)}
+
+    <hr style="border-color:rgba(255,255,255,0.06);margin:20px 0">
+
+    <h4 style="margin:0 0 12px;color:rgba(255,255,255,0.7);font-size:0.9rem;font-weight:600;">SEO / META</h4>
+
+    <label>Meta title (opcional)</label>
+    <input type="text" id="f-brand-meta-title" value="${brand?.meta_title || ""}" placeholder="Título para SEO">
+
+    <label>Meta description (opcional)</label>
+    <textarea id="f-brand-meta-desc" rows="3" placeholder="Descripción para SEO">${brand?.meta_description || ""}</textarea>
+
     <div class="form-actions">
       <button class="btn btn-ghost" id="btn-modal-cancel">Cancelar</button>
       <button class="btn btn-primary" id="btn-modal-save">${isEdit ? "Guardar" : "Crear"}</button>
@@ -207,35 +240,49 @@ async function brandForm(brandId) {
 
   modal.querySelector("#btn-modal-cancel").onclick = () => modal.closest(".modal-overlay").remove()
   modal.querySelector("#btn-modal-save").onclick = async () => {
-    const name = modal.querySelector("#f-brand-name").value.trim()
-    if (!name) return
-    const slugInput = modal.querySelector("#f-brand-slug").value.trim()
-    const data = {
-      name,
-      domain: modal.querySelector("#f-brand-domain").value.trim() || null,
-      slug: slugInput || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+    const saveBtn = modal.querySelector("#btn-modal-save")
+    saveBtn.disabled = true
+    saveBtn.textContent = "Guardando..."
+    try {
+      const name = modal.querySelector("#f-brand-name").value.trim()
+      if (!name) { saveBtn.disabled = false; saveBtn.textContent = isEdit ? "Guardar" : "Crear"; return }
+      const slugInput = modal.querySelector("#f-brand-slug").value.trim()
+      const data = {
+        name,
+        domain: modal.querySelector("#f-brand-domain").value.trim() || null,
+        slug: slugInput || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+        meta_title: modal.querySelector("#f-brand-meta-title").value.trim() || null,
+        meta_description: modal.querySelector("#f-brand-meta-desc").value.trim() || null,
+      }
+      if (isEdit) data.id = brandId
+      const result = isEdit ? await updateBrand(data) : await createBrand(data)
+      const newId = result?.id || brandId
+
+      const fileInputs = [
+        { el: modal.querySelector("#f-brand-logo"), type: "logo" },
+        { el: modal.querySelector("#f-brand-bg"), type: "background" },
+        { el: modal.querySelector("#f-brand-bg-mobile"), type: "background_mobile" },
+        { el: modal.querySelector("#f-brand-favicon"), type: "favicon" },
+        { el: modal.querySelector("#f-brand-og-image"), type: "og_image" },
+      ]
+      await Promise.all(fileInputs.map(async ({ el, type }) => {
+        if (!el || !el.files || !el.files[0]) return
+        const file = el.files[0]
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
+        await new Promise(resolve => { reader.onload = resolve })
+        const base64 = reader.result.split(",")[1]
+        await uploadAsset(newId, type, base64, file.type)
+      }))
+
+      modal.closest(".modal-overlay").remove()
+      renderBrands(document.getElementById("section-content"))
+    } catch (err) {
+      saveBtn.disabled = false
+      saveBtn.textContent = isEdit ? "Guardar" : "Crear"
+      const msg = err?.message || err?.error || "Error al guardar la marca"
+      alert(msg)
     }
-    if (isEdit) data.id = brandId
-    const result = isEdit ? await updateBrand(data) : await createBrand(data)
-    const newId = result?.id || brandId
-
-    const fileInputs = [
-      { el: modal.querySelector("#f-brand-logo"), type: "logo" },
-      { el: modal.querySelector("#f-brand-bg"), type: "background" },
-      { el: modal.querySelector("#f-brand-bg-mobile"), type: "background_mobile" }
-    ]
-    await Promise.all(fileInputs.map(async ({ el, type }) => {
-      if (!el || !el.files || !el.files[0]) return
-      const file = el.files[0]
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      await new Promise(resolve => { reader.onload = resolve })
-      const base64 = reader.result.split(",")[1]
-      await uploadAsset(newId, type, base64, file.type)
-    }))
-
-    modal.closest(".modal-overlay").remove()
-    renderBrands(document.getElementById("section-content"))
   }
 }
 

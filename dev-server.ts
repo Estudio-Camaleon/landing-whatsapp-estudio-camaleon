@@ -15,7 +15,6 @@ const PORT = parseInt(process.env.PORT || "3000", 10);
 app.use(express.json({ limit: "50mb" }));
 
 // ─── Static files ───
-app.use("/media", express.static(path.join(__dirname, "public", "media")));
 app.use("/apps", express.static(path.join(__dirname, "apps")));
 app.use("/services", express.static(path.join(__dirname, "services")));
 app.use(express.static(__dirname, { index: false }));

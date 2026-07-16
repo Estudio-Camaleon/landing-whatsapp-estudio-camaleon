@@ -52,9 +52,14 @@ function renderSucursalSelector() {
     btn.title = s.address;
 
     btn.addEventListener("click", function() {
-      SELECTED_SUCURSAL = s.name;
-      container.querySelectorAll(".sucursal-btn").forEach(function(b) { b.classList.remove("active"); });
-      btn.classList.add("active");
+      if (SELECTED_SUCURSAL === s.name) {
+        SELECTED_SUCURSAL = null;
+        btn.classList.remove("active");
+      } else {
+        SELECTED_SUCURSAL = s.name;
+        container.querySelectorAll(".sucursal-btn").forEach(function(b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+      }
       updateSucursalState();
     });
 
@@ -63,17 +68,13 @@ function renderSucursalSelector() {
 }
 
 function updateSucursalState() {
-  var btn = document.getElementById("cta-button");
   var sellerEl = document.getElementById("assigned-seller");
-
   if (SELECTED_SUCURSAL) {
-    btn.classList.remove("disabled");
-    btn.removeAttribute("aria-disabled");
     sellerEl.textContent = "Sucursal: " + SELECTED_SUCURSAL;
     sellerEl.style.display = "";
   } else {
-    btn.classList.add("disabled");
-    btn.setAttribute("aria-disabled", "true");
+    sellerEl.textContent = "Sin sucursal seleccionada — se asignar\u00E1 un vendedor al azar";
+    sellerEl.style.display = "";
   }
 }
 
@@ -323,6 +324,14 @@ function showAssignConfirm(data) {
     '</a>';
 
   btn.parentNode.insertBefore(wrapper, btn.nextSibling);
+
+  var waBtn = wrapper.querySelector(".confirm-btn");
+  if (waBtn) {
+    waBtn.addEventListener("click", function() {
+      setCooldownEnd(Date.now() + 300000);
+      showCooldown();
+    });
+  }
 }
 
 function showVendorError() {
@@ -361,14 +370,18 @@ function showVendorError() {
 async function handleClick(e) {
   e.preventDefault();
 
-  if (!SELECTED_SUCURSAL) return;
+  var hasSucursales = CONFIG.sucursales && CONFIG.sucursales.length > 0;
+  if (hasSucursales && !SELECTED_SUCURSAL) {
+    // Sin sucursal seleccionada → asigna vendedor aleatorio de la marca
+    // (se pasa SELECTED_SUCURSAL = null, la API elige entre todos los vendedores)
+  }
 
   try {
     showLoading();
 
     var params = new URLSearchParams(window.location.search);
     var brandParam = params.get("brand") || CONFIG.slug || "";
-    var data = await assignVendor(SELECTED_SUCURSAL, brandParam);
+    var data = await assignVendor(SELECTED_SUCURSAL || "", brandParam);
 
     __secLog("INFO", "Vendedor asignado vía API", {
       sucursal: SELECTED_SUCURSAL,
@@ -377,8 +390,6 @@ async function handleClick(e) {
     });
 
     hideLoading();
-
-    setCooldownEnd(Date.now() + 300000);
 
     showAssignConfirm(data);
   } catch (err) {
@@ -402,6 +413,7 @@ async function loadBrandAssets() {
       if (window.__brands[key] === CONFIG) { slug = window.__brands[key].id; break; }
     }
   }
+  if (!slug) slug = CONFIG.slug || null;
   var q = slug ? "?slug=" + slug : "";
   try {
     var res = await fetch("/api/brand-config" + q);
@@ -515,18 +527,22 @@ async function init() {
     }
     if (!hasSpecificHost) {
       document.title = CONFIG.title || "WhatsApp Landing";
+      var metaDesc = document.getElementById("meta-description");
+      if (metaDesc) metaDesc.content = CONFIG.meta_description || "";
       renderBrandSelector();
       return;
     }
   }
 
   // ─── Dynamic brand via API (not in brands.js) ────────
+  var isDynamicBrand = false;
   if (brandParam && CONFIG && CONFIG.id !== brandParam) {
     try {
       var res = await fetch("/api/brand-config?slug=" + encodeURIComponent(brandParam) + "&full=true");
       if (res.ok) {
         var data = await res.json();
         CONFIG = { ...CONFIG, ...data };
+        isDynamicBrand = true;
       }
     } catch (e) {}
   }
@@ -534,6 +550,16 @@ async function init() {
   // ─── Normal Brand Mode ────────────────────────────────
   var brandName = brandParam || window.location.hostname.replace(/^www\./, "").toLowerCase();
   await loadBrandAssets();
+
+  // Convert DB fields to display fields
+  if (CONFIG.logo_url) CONFIG.logo = CONFIG.logo_url;
+  if (CONFIG.background_url) CONFIG.background = CONFIG.background_url;
+  if (CONFIG.background_mobile_url) CONFIG.background_mobile = CONFIG.background_mobile_url;
+  if (isDynamicBrand) {
+    if (CONFIG.meta_title) CONFIG.title = CONFIG.meta_title;
+    else if (CONFIG.name) CONFIG.title = CONFIG.name;
+    if (CONFIG.name) CONFIG.heading = "Habla con " + CONFIG.name;
+  }
 
   __secLog("INFO", "P\u00E1gina cargada", {
     brand: brandName,
@@ -572,8 +598,18 @@ async function init() {
   if (CONFIG.title) {
     document.title = CONFIG.title;
   }
+  var metaDesc = document.getElementById("meta-description");
+  if (metaDesc && CONFIG.meta_description) {
+    metaDesc.content = CONFIG.meta_description;
+  }
+  var metaOgImage = document.getElementById("meta-og-image");
+  if (metaOgImage && CONFIG.og_image) {
+    metaOgImage.content = CONFIG.og_image;
+  }
   var favicon = document.getElementById("favicon");
-  if (favicon && logo && typeof logo === "string") {
+  if (favicon && CONFIG.favicon_url) {
+    favicon.href = CONFIG.favicon_url;
+  } else if (favicon && logo && typeof logo === "string") {
     favicon.href = logo;
   }
 
@@ -600,8 +636,6 @@ async function init() {
       sel.className = "sucursal-selector";
       logoContainer.parentNode.insertBefore(sel, logoContainer);
     }
-    btn.classList.add("disabled");
-    btn.setAttribute("aria-disabled", "true");
     renderSucursalSelector();
   }
 

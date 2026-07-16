@@ -25,6 +25,10 @@ export interface StoredBrand {
   logo_url?: string | null;
   background_url?: string | null;
   background_mobile_url?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  og_image?: string | null;
+  favicon_url?: string | null;
 }
 
 export interface StoredSucursal {
@@ -52,6 +56,10 @@ interface DbBrand {
   logo_url: string | null;
   background_url: string | null;
   background_mobile_url: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image: string | null;
+  favicon_url: string | null;
 }
 
 type VendorInsert = {
@@ -113,6 +121,10 @@ function mapBrand(row: DbBrand): StoredBrand {
     logo_url: row.logo_url,
     background_url: row.background_url,
     background_mobile_url: row.background_mobile_url,
+    meta_title: row.meta_title,
+    meta_description: row.meta_description,
+    og_image: row.og_image,
+    favicon_url: row.favicon_url,
   };
 }
 
@@ -176,15 +188,31 @@ export async function createBrand(data: {
   name: string;
   slug: string;
   domain?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  og_image?: string | null;
+  favicon_url?: string | null;
 }): Promise<StoredBrand> {
+  const insertData: Record<string, unknown> = {
+    name: data.name,
+    slug: data.slug,
+    domain: data.domain || null,
+  };
+  if (data.meta_title) insertData.meta_title = data.meta_title;
+  if (data.meta_description) insertData.meta_description = data.meta_description;
+  if (data.og_image) insertData.og_image = data.og_image;
+  if (data.favicon_url) insertData.favicon_url = data.favicon_url;
+
   const { data: inserted, error } = await getSupabase()
     .from("brands")
-    .insert({ name: data.name, slug: data.slug, domain: data.domain || null })
+    .insert(insertData)
     .select()
     .single();
   if (error) throw error;
   return mapBrand(inserted as DbBrand);
 }
+
+const OPTIONAL_COLS = ["meta_title", "meta_description", "og_image", "favicon_url"] as const;
 
 export async function updateBrand(id: string, updates: Record<string, unknown>): Promise<StoredBrand | null> {
   const dbUpdates: Record<string, unknown> = {};
@@ -195,6 +223,10 @@ export async function updateBrand(id: string, updates: Record<string, unknown>):
   if (updates.logo_url !== undefined) dbUpdates.logo_url = updates.logo_url;
   if (updates.background_url !== undefined) dbUpdates.background_url = updates.background_url;
   if (updates.background_mobile_url !== undefined) dbUpdates.background_mobile_url = updates.background_mobile_url;
+  if (updates.meta_title) dbUpdates.meta_title = updates.meta_title;
+  if (updates.meta_description) dbUpdates.meta_description = updates.meta_description;
+  if (updates.og_image) dbUpdates.og_image = updates.og_image;
+  if (updates.favicon_url) dbUpdates.favicon_url = updates.favicon_url;
 
   const { data, error } = await getSupabase()
     .from("brands")
@@ -203,11 +235,29 @@ export async function updateBrand(id: string, updates: Record<string, unknown>):
     .select()
     .single();
   if (error && error.code === "PGRST116") return null;
+  if (error && error.code === "PGRST204") {
+    // Column not found in schema cache → remove optional columns and retry
+    for (const col of OPTIONAL_COLS) delete dbUpdates[col];
+    const { data: retryData, error: retryError } = await getSupabase()
+      .from("brands")
+      .update(dbUpdates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (retryError && retryError.code === "PGRST116") return null;
+    if (retryError) throw retryError;
+    return retryData ? mapBrand(retryData as DbBrand) : null;
+  }
   if (error) throw error;
   return data ? mapBrand(data as DbBrand) : null;
 }
 
 export async function deleteBrand(id: string): Promise<boolean> {
+  // Delete child records first (FK constraints may lack CASCADE in existing DB)
+  await getSupabase().from("vendors").delete().eq("brand_id", id);
+  await getSupabase().from("sucursales").delete().eq("brand_id", id);
+  await getSupabase().from("rotation_state").delete().eq("brand_id", id);
+  await getSupabase().from("events").delete().eq("brand_id", id);
   const { error } = await getSupabase().from("brands").delete().eq("id", id);
   if (error) throw error;
   return true;

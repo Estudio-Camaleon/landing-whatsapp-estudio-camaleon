@@ -27,9 +27,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     return res.status(503).json({ error: "brand_suspended" });
   }
 
-  if ((brand as any).sucursales && !sucursalName) {
-    return res.status(400).json({ error: "sucursal_required" });
-  }
+  // Si no se especifica sucursal, se asigna un vendedor al azar de la marca
 
   const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
   const recent = await getRecentEvents(brand.id, ip, fiveMinAgo);

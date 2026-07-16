@@ -101,8 +101,10 @@ export async function deleteSucursal(brandId, name) {
 
 // ─── Upload ───
 export async function uploadAsset(brandId, assetType, fileBase64, mimeType) {
-  return req("/api/upload-asset", {
+  const result = await req("/api/upload-asset", {
     method: "POST",
     body: JSON.stringify({ brand_id: brandId, asset_type: assetType, file_base64: fileBase64, mime_type: mimeType })
   })
+  if (result.error) throw new Error(result.error + (result.details ? ": " + result.details : ""))
+  return result
 }

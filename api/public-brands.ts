@@ -15,7 +15,7 @@ export default async (_req: VercelRequest, res: VercelResponse) => {
       name: b.title || b.name,
       theme: b.theme || "indumentaria",
       slug: b.slug || b.id,
-      logo: b.logo || null,
+      logo: b.logo || b.logo_url || null,
       logoWidth: b.logoWidth || null,
       logoHeight: b.logoHeight || null,
       accent: THEME_ACCENTS[b.theme || "indumentaria"] || "#667eea",

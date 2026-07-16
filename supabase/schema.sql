@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS public.brands (
 );
 
 ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS active boolean DEFAULT true;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS meta_title text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS meta_description text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS og_image text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS favicon_url text;
 
 -- ─── Sucursales (branches per brand) ───
 CREATE TABLE IF NOT EXISTS public.sucursales (

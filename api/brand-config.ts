@@ -34,8 +34,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
   return res.status(200).json({
     slug: brand.slug || brand.id,
-    logo_url: brand.logo || null,
-    background_url: brand.background || null,
-    background_mobile_url: brand.backgroundMobile || null,
+    logo_url: brand.logo_url || null,
+    background_url: brand.background_url || null,
+    background_mobile_url: brand.background_mobile_url || null,
+    meta_title: brand.meta_title || null,
+    favicon_url: brand.favicon_url || null,
   });
 };

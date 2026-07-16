@@ -70,8 +70,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const vendor = vendorList[nextIndex];
   const decodedPhone = vendor.phone;
 
-  const messages = ["Hola! Vengo de la web", "Buenas, quiero info", "Hola, me interesa un producto"];
-  const message = messages[Math.floor(Math.random() * messages.length)];
+  const brandName = (brand as any).name || "";
+  const messages = [
+    "Hola! Vengo de la web de " + brandName + ", quería consultar sobre un producto",
+    "Buenas! Te contacto desde la página de " + brandName + ", me interesaría recibir informacion",
+    "Hola! Estuve viendo la web de " + brandName + " y queria hacer una consulta"
+  ];
+  const idx = Math.floor(Math.random() * messages.length);
+  const message = messages[idx];
   const whatsappUrl = `https://wa.me/${decodedPhone}?text=${encodeURIComponent(message)}`;
 
   await addEvent({

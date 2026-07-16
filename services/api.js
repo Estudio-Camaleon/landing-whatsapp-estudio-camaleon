@@ -1,6 +1,6 @@
-export async function assignVendor(sucursal) {
-  var url = "/assign-vendor"
-  if (sucursal) url += "?sucursal=" + encodeURIComponent(sucursal)
+export async function assignVendor(sucursal, brand) {
+  var url = "/assign-vendor?sucursal=" + encodeURIComponent(sucursal)
+  if (brand) url += "&brand=" + encodeURIComponent(brand)
 
   const res = await fetch(url)
 

@@ -214,6 +214,51 @@ function hideLoading() {
   }, 500);
 }
 
+var COOLDOWN_INTERVAL = null;
+
+function getCooldownEnd() {
+  var val = localStorage.getItem("wa-cooldown");
+  return val ? parseInt(val, 10) : 0;
+}
+
+function setCooldownEnd(ms) {
+  localStorage.setItem("wa-cooldown", String(ms));
+}
+
+function clearCooldownStorage() {
+  localStorage.removeItem("wa-cooldown");
+}
+
+function formatCountdown(seconds) {
+  var m = Math.floor(seconds / 60);
+  var s = seconds % 60;
+  return m + ":" + (s < 10 ? "0" : "") + s;
+}
+
+function renderCooldown(wrapper, remaining) {
+  wrapper.innerHTML =
+    '<div class="cooldown-icon">' +
+      '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+    '</div>' +
+    '<p class="cooldown-text">Ya te pusiste en contacto con un vendedor</p>' +
+    '<p class="cooldown-timer">' + formatCountdown(remaining) + '</p>' +
+    '<p class="cooldown-hint">Esper\u00E1 este tiempo antes de volver a intentar</p>';
+}
+
+function hideCooldown() {
+  if (COOLDOWN_INTERVAL) {
+    clearInterval(COOLDOWN_INTERVAL);
+    COOLDOWN_INTERVAL = null;
+  }
+  var existing = document.getElementById("cooldown-message");
+  if (existing) existing.remove();
+  var btn = document.getElementById("cta-button");
+  if (btn) btn.style.display = "";
+  var sellerEl = document.getElementById("assigned-seller");
+  if (sellerEl) sellerEl.style.display = "";
+  clearCooldownStorage();
+}
+
 function showCooldown() {
   var btn = document.getElementById("cta-button");
   var sellerEl = document.getElementById("assigned-seller");
@@ -221,27 +266,32 @@ function showCooldown() {
   btn.style.display = "none";
   if (sellerEl) sellerEl.style.display = "none";
 
+  var existing = document.getElementById("cooldown-message");
+  if (existing) existing.remove();
+
+  var end = getCooldownEnd();
+  if (!end) {
+    end = Date.now() + 300000;
+    setCooldownEnd(end);
+  }
+
   var wrapper = document.createElement("div");
   wrapper.id = "cooldown-message";
   wrapper.className = "cooldown-message";
-
-  var icon = document.createElement("div");
-  icon.className = "cooldown-icon";
-  icon.innerHTML =
-    '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
-  wrapper.appendChild(icon);
-
-  var text = document.createElement("p");
-  text.className = "cooldown-text";
-  text.textContent = "Ya te pusiste en contacto con un vendedor";
-  wrapper.appendChild(text);
-
-  var hint = document.createElement("p");
-  hint.className = "cooldown-hint";
-  hint.textContent = "Esper\u00E1 unos minutos antes de volver a intentar";
-  wrapper.appendChild(hint);
-
   btn.parentNode.insertBefore(wrapper, btn.nextSibling);
+
+  function tick() {
+    var remaining = Math.max(0, Math.floor((end - Date.now()) / 1000));
+    if (remaining <= 0) {
+      hideCooldown();
+      return;
+    }
+    renderCooldown(wrapper, remaining);
+  }
+
+  tick();
+  if (COOLDOWN_INTERVAL) clearInterval(COOLDOWN_INTERVAL);
+  COOLDOWN_INTERVAL = setInterval(tick, 1000);
 }
 
 function showVendorError() {
@@ -285,7 +335,9 @@ async function handleClick(e) {
   try {
     showLoading();
 
-    var data = await assignVendor(SELECTED_SUCURSAL);
+    var params = new URLSearchParams(window.location.search);
+    var brandParam = params.get("brand") || CONFIG.slug || "";
+    var data = await assignVendor(SELECTED_SUCURSAL, brandParam);
 
     __secLog("INFO", "Vendedor asignado vía API", {
       sucursal: SELECTED_SUCURSAL,
@@ -293,8 +345,9 @@ async function handleClick(e) {
       whatsappUrl: data.whatsappUrl
     });
 
-    var ctaText = document.getElementById("cta-text");
-    if (ctaText) ctaText.textContent = "Hablar con " + data.vendor.name;
+    hideLoading();
+
+    setCooldownEnd(Date.now() + 300000);
 
     var sellerEl = document.getElementById("assigned-seller");
     if (sellerEl) {
@@ -304,7 +357,7 @@ async function handleClick(e) {
 
     setTimeout(function() {
       window.location.href = data.whatsappUrl;
-    }, 1200);
+    }, 2500);
   } catch (err) {
     hideLoading();
 
@@ -528,6 +581,12 @@ async function init() {
   }
 
   btn.addEventListener("click", handleClick);
+
+  // ─── Check persisted cooldown ──────────────────────
+  var cooldownEnd = getCooldownEnd();
+  if (cooldownEnd > Date.now()) {
+    showCooldown();
+  }
 
   setTimeout(hideLoading, 800);
 }

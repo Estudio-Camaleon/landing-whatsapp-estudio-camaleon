@@ -216,17 +216,22 @@ function hideLoading() {
 
 var COOLDOWN_INTERVAL = null;
 
+function cooldownKey() {
+  var slug = CONFIG && CONFIG.slug ? CONFIG.slug : "default";
+  return "wa-cooldown-" + slug;
+}
+
 function getCooldownEnd() {
-  var val = localStorage.getItem("wa-cooldown");
+  var val = localStorage.getItem(cooldownKey());
   return val ? parseInt(val, 10) : 0;
 }
 
 function setCooldownEnd(ms) {
-  localStorage.setItem("wa-cooldown", String(ms));
+  localStorage.setItem(cooldownKey(), String(ms));
 }
 
 function clearCooldownStorage() {
-  localStorage.removeItem("wa-cooldown");
+  localStorage.removeItem(cooldownKey());
 }
 
 function formatCountdown(seconds) {

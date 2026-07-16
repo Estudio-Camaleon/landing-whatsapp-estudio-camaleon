@@ -4,40 +4,55 @@ import { getSucursalesByBrand } from "./_lib/store";
 import { getVendorsByBrand } from "./_lib/store";
 
 export default async (req: VercelRequest, res: VercelResponse) => {
-  const slug = req.query.slug as string;
-  const host = req.headers["host"] || "";
-  const full = req.query.full !== undefined;
+  try {
+    const slug = typeof req.query.slug === "string" ? req.query.slug : null;
+    const host = typeof req.headers["host"] === "string" ? req.headers["host"] : "";
+    const full = req.query.full !== undefined;
 
-  let brand = slug ? (await getBrandBySlug(slug) || await getBrandById(slug)) : null;
-  if (!brand) brand = await getBrandByDomain(host);
+    // --- Buscar marca -------------------------------------------------------
+    let brand = slug ? (await getBrandBySlug(slug) || await getBrandById(slug)) : null;
+    if (!brand) brand = await getBrandByDomain(host);
 
-  if (!brand) {
-    return res.status(404).json({ error: "brand_not_found" });
-  }
+    if (!brand) {
+      return res.status(404).json({ error: "brand_not_found" });
+    }
 
-  if (full) {
-    const sucursales = await getSucursalesByBrand(brand.id);
-    const vendors = await getVendorsByBrand(brand.id);
-    return res.status(200).json({
-      ...brand,
-      sucursales: sucursales.map(s => ({
-        ...s,
+    // --- Respuesta completa -----------------------------------------------
+    if (full) {
+      // Protección contra errores en la capa de datos
+      const sucursales = (await getSucursalesByBrand(brand.id)) ?? [];
+      const vendors = (await getVendorsByBrand(brand.id)) ?? [];
+
+      return res.status(200).json({
+        slug: brand.slug ?? brand.id,
+        logo_url: brand.logo_url || null,
+        background_url: brand.background_url || null,
+        background_mobile_url: brand.background_mobile_url || null,
+        meta_title: brand.meta_title || null,
+        favicon_url: brand.favicon_url || null,
+        sucursales: sucursales.map((s: any) => ({
+          ...s,
+          employees: vendors
+            .filter((v: any) => v.sucursal_name === s.name)
+            .map((v: any) => ({ name: v.name, phone: v.phone })),
+        })),
         employees: vendors
-          .filter(v => v.sucursal_name === s.name)
-          .map(v => ({ name: v.name, phone: v.phone })),
-      })),
-      employees: vendors
-        .filter(v => !v.sucursal_name)
-        .map(v => ({ name: v.name, phone: v.phone })),
-    });
-  }
+          .filter((v: any) => !v.sucursal_name)
+          .map((v: any) => ({ name: v.name, phone: v.phone })),
+      });
+    }
 
-  return res.status(200).json({
-    slug: brand.slug || brand.id,
-    logo_url: brand.logo_url || null,
-    background_url: brand.background_url || null,
-    background_mobile_url: brand.background_mobile_url || null,
-    meta_title: brand.meta_title || null,
-    favicon_url: brand.favicon_url || null,
-  });
+    // --- Respuesta básica -------------------------------------------------
+    return res.status(200).json({
+      slug: brand.slug ?? brand.id,
+      logo_url: brand.logo_url || null,
+      background_url: brand.background_url || null,
+      background_mobile_url: brand.background_mobile_url || null,
+      meta_title: brand.meta_title || null,
+      favicon_url: brand.favicon_url || null,
+    });
+  } catch (err) {
+    console.error("[brand-config] error:", err);
+    return res.status(500).json({ error: "internal_server_error", details: err.message });
+  }
 };

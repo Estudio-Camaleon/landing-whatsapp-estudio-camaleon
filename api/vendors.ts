@@ -19,13 +19,13 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     const sucursalName = req.query.sucursal as string;
 
     if (vendorId) {
-      const v = getVendorById(vendorId);
+      const v = await getVendorById(vendorId);
       if (!v) return res.status(404).json({ error: "not_found" });
       return res.status(200).json(v);
     }
 
-    if (brandId) return res.status(200).json(getVendorsByBrand(brandId, sucursalName));
-    return res.status(200).json(getAllVendors());
+    if (brandId) return res.status(200).json(await getVendorsByBrand(brandId, sucursalName));
+    return res.status(200).json(await getAllVendors());
   }
 
   if (req.method === "POST") {
@@ -33,10 +33,13 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     if (!brand_id || !name || !phone) {
       return res.status(400).json({ error: "brand_id_name_phone_required" });
     }
-    const id = `${brand_id}-${name}-${Date.now()}`;
-    const vendor = createVendor({
-      id, brand_id, sucursal_name: sucursal_name || "",
-      name, phone, active: active !== false, schedule: schedule || {},
+    const vendor = await createVendor({
+      brand_id,
+      sucursal_name: sucursal_name || "",
+      name,
+      phone,
+      active: active !== false,
+      schedule: schedule || {},
     });
     return res.status(201).json(vendor);
   }
@@ -44,7 +47,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   if (req.method === "PUT") {
     const { id, ...data } = req.body || {};
     if (!id) return res.status(400).json({ error: "id_required" });
-    const vendor = updateVendor(id, data);
+    const vendor = await updateVendor(id, data);
     if (!vendor) return res.status(404).json({ error: "not_found" });
     return res.status(200).json(vendor);
   }
@@ -52,7 +55,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   if (req.method === "DELETE") {
     const { id } = req.body || {};
     if (!id) return res.status(400).json({ error: "id_required" });
-    const ok = deleteVendor(id);
+    const ok = await deleteVendor(id);
     if (!ok) return res.status(404).json({ error: "not_found" });
     return res.status(200).json({ ok: true });
   }

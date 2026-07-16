@@ -16,28 +16,24 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   if (req.method === "GET") {
     const brandId = req.query.id as string;
     if (brandId) {
-      const brand = getBrandById(brandId);
+      const brand = await getBrandById(brandId);
       if (!brand) return res.status(404).json({ error: "not_found" });
       return res.status(200).json(brand);
     }
-    return res.status(200).json(getAllBrands());
+    return res.status(200).json(await getAllBrands());
   }
 
   if (req.method === "POST") {
-    const { name, slug, domain, theme } = req.body || {};
-    if (!name) return res.status(400).json({ error: "name_required" });
-    const id = slug || name.toLowerCase().replace(/\s+/g, "-");
-    const brand = createBrand({
-      id, name, slug: id, domain: domain || null,
-      theme: theme || "indumentaria", active: true,
-    });
+    const { name, slug, domain } = req.body || {};
+    if (!name || !slug) return res.status(400).json({ error: "name_and_slug_required" });
+    const brand = await createBrand({ name, slug, domain: domain || null });
     return res.status(201).json(brand);
   }
 
   if (req.method === "PUT") {
     const { id, ...data } = req.body || {};
     if (!id) return res.status(400).json({ error: "id_required" });
-    const brand = updateBrand(id, data);
+    const brand = await updateBrand(id, data);
     if (!brand) return res.status(404).json({ error: "not_found" });
     return res.status(200).json(brand);
   }
@@ -45,7 +41,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   if (req.method === "DELETE") {
     const { id } = req.body || {};
     if (!id) return res.status(400).json({ error: "id_required" });
-    const ok = deleteBrand(id);
+    const ok = await deleteBrand(id);
     if (!ok) return res.status(404).json({ error: "not_found" });
     return res.status(200).json({ ok: true });
   }

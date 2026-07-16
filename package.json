@@ -6,7 +6,8 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "tsx dev-server.ts",
+    "dev:vercel": "vercel dev",
     "build": "",
     "start": "vercel start",
     "test": "vitest run",
@@ -20,6 +21,12 @@
     "@semantic-release/release-notes-generator": "^14.1.1",
     "@vercel/node": "^3.0.0",
     "semantic-release": "^25.0.7",
+    "tsx": "^4.23.1",
     "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
   }
 }

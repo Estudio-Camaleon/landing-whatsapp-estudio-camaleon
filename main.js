@@ -293,6 +293,15 @@ async function handleClick(e) {
       whatsappUrl: data.whatsappUrl
     });
 
+    var ctaText = document.getElementById("cta-text");
+    if (ctaText) ctaText.textContent = "Hablar con " + data.vendor.name;
+
+    var sellerEl = document.getElementById("assigned-seller");
+    if (sellerEl) {
+      sellerEl.textContent = "Te atender\u00E1 " + data.vendor.name;
+      sellerEl.style.display = "";
+    }
+
     setTimeout(function() {
       window.location.href = data.whatsappUrl;
     }, 1200);

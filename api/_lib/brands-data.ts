@@ -1,10 +1,8 @@
 import {
-  seedData, onSeed, isSeeded,
   getBrandById as storeGetBrandById,
   getBrandBySlug as storeGetBrandBySlug,
   getBrandByDomain as storeGetBrandByDomain,
   getAllBrands as storeGetAllBrands,
-  getVendorsByBrand,
 } from "./store";
 
 export interface Employee {
@@ -49,11 +47,11 @@ const staticBrandData: Record<string, BrandConfig> = {
     heading: "Elegí tu sucursal",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
-    logo: "./media/logo/maggie/lg-maggie.svg",
+    logo: "/media/logo/maggie/lg-maggie.svg",
     logoWidth: "300px",
     logoHeight: "300px",
-    background: "./media/bg-deskop/maggie/bg-maggie.png",
-    backgroundMobile: "./media/bg-mobile/maggie/bg-mobile-maggie.png",
+    background: "/media/bg-deskop/maggie/bg-maggie.png",
+    backgroundMobile: "/media/bg-mobile/maggie/bg-mobile-maggie.png",
     sucursales: [
       { name: "Casa Central", address: "San Miguel de Tucumán", employees: [{ name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" }] },
     ],
@@ -71,11 +69,11 @@ const staticBrandData: Record<string, BrandConfig> = {
     heading: "Elegí tu sucursal",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
-    logo: "./media/logo/aventus/lg-aventus.svg",
+    logo: "/media/logo/aventus/lg-aventus.svg",
     logoWidth: "800px",
     logoHeight: "auto",
-    background: "./media/bg-deskop/aventus/bg-aventus.png",
-    backgroundMobile: "./media/bg-mobile/aventus/bg-mobile-aventus.png",
+    background: "/media/bg-deskop/aventus/bg-aventus.png",
+    backgroundMobile: "/media/bg-mobile/aventus/bg-mobile-aventus.png",
     sucursales: [
       { name: "Casa Central", address: "San Miguel de Tucumán", employees: [
         { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
@@ -99,11 +97,11 @@ const staticBrandData: Record<string, BrandConfig> = {
     heading: "Elegí tu sucursal",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
-    logo: "./media/logo/tuslibrosya/lg-tuslibrosya.svg",
+    logo: "/media/logo/tuslibrosya/lg-tuslibrosya.svg",
     logoWidth: "100px",
     logoHeight: "100px",
-    background: "./media/bg-deskop/tuslibrosya/bg-tuslibrosya.png",
-    backgroundMobile: "./media/bg-mobile/tuslibrosya/bg-mobile-tuslibrosya.png",
+    background: "/media/bg-deskop/tuslibrosya/bg-tuslibrosya.png",
+    backgroundMobile: "/media/bg-mobile/tuslibrosya/bg-mobile-tuslibrosya.png",
     sucursales: [
       { name: "Casa Central", address: "San Miguel de Tucumán", employees: [
         { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
@@ -123,66 +121,12 @@ const staticBrandData: Record<string, BrandConfig> = {
   },
 };
 
-// Register seed callback so store auto-seeds on first access
-onSeed(function() {
-  if (isSeeded()) return;
-
-  const domainBySlug: Record<string, string> = {
-    maggiestore: "maggiestore.com",
-    aventus: "aventus.com",
-    tuslibrosya: "tuslibrosya.com",
-  };
-
-  const brands = Object.entries(staticBrandData).map(([key, cfg]) => ({
-    id: cfg.id,
-    name: cfg.title || cfg.id,
-    slug: cfg.id,
-    domain: domainBySlug[cfg.id] || null,
-    theme: cfg.theme,
-    title: cfg.title,
-    heading: cfg.heading,
-    message: cfg.message,
-    buttonText: cfg.buttonText,
-    logo: cfg.logo,
-    logoWidth: cfg.logoWidth,
-    logoHeight: cfg.logoHeight,
-    background: cfg.background,
-    backgroundMobile: cfg.backgroundMobile,
-    active: true,
-    cardPadding: cfg.cardPadding,
-    logoMarginBottom: cfg.logoMarginBottom,
-    headingMarginBottom: cfg.headingMarginBottom,
-    sellerMarginBottom: cfg.sellerMarginBottom,
-    ctaPadding: cfg.ctaPadding,
-    logoOverflow: cfg.logoOverflow,
-  }));
-
-  const sucursales: { name: string; address: string; brand_id: string }[] = [];
-  const vendors: {
-    id: string; brand_id: string; sucursal_name: string;
-    name: string; phone: string; active: boolean; schedule: Record<string, any>;
-  }[] = [];
-
-  Object.values(staticBrandData).forEach(cfg => {
-    if (!cfg.sucursales) return;
-    cfg.sucursales.forEach(s => {
-      sucursales.push({ name: s.name, address: s.address, brand_id: cfg.id });
-      s.employees.forEach((e, i) => {
-        vendors.push({
-          id: `${cfg.id}-${s.name}-${i}`,
-          brand_id: cfg.id,
-          sucursal_name: s.name,
-          name: e.name,
-          phone: e.phone,
-          active: true,
-          schedule: {},
-        });
-      });
-    });
-  });
-
-  seedData(brands, sucursales, vendors);
-});
+function mergeWithStatic(storeBrand: { id: string; slug?: string } & Record<string, unknown>) {
+  const cfg = staticBrandData[storeBrand.slug || storeBrand.id];
+  if (!cfg) return storeBrand;
+  // Static config provides visual defaults, DB overrides (preserves UUID id)
+  return { ...cfg, ...storeBrand, employees: getBrandEmployees(cfg) };
+}
 
 export function getBrandEmployees(brand: BrandConfig | { id: string }, sucursalName?: string): Employee[] {
   if (sucursalName) {
@@ -201,18 +145,21 @@ export function getBrandEmployees(brand: BrandConfig | { id: string }, sucursalN
   return [];
 }
 
-export function getBrandByDomain(host: string) {
-  const store = storeGetBrandByDomain(host);
-  if (store) return { ...store, employees: getBrandEmployees(store) };
+export async function getBrandByDomain(host: string) {
+  const store = await storeGetBrandByDomain(host);
+  if (store) return mergeWithStatic(store) as BrandConfig;
+  const clean = host.replace(/^www\./, "").toLowerCase();
+  for (const key in staticBrandData) {
+    if (key === clean || key === host) {
+      return { ...staticBrandData[key], employees: getBrandEmployees(staticBrandData[key]) };
+    }
+  }
   return null;
 }
 
-export function getBrandBySlug(slug: string) {
-  const store = storeGetBrandBySlug(slug);
-  if (store) {
-    const cfg = staticBrandData[slug];
-    return { ...store, ...cfg, employees: cfg ? getBrandEmployees(cfg) : [] };
-  }
+export async function getBrandBySlug(slug: string) {
+  const store = await storeGetBrandBySlug(slug);
+  if (store) return mergeWithStatic(store) as BrandConfig;
   if (staticBrandData[slug]) {
     const cfg = staticBrandData[slug];
     return { ...cfg, employees: getBrandEmployees(cfg) };
@@ -220,19 +167,19 @@ export function getBrandBySlug(slug: string) {
   return null;
 }
 
-export function getDefaultBrand() {
-  const brand = {
+export function getDefaultBrand(): BrandConfig {
+  return {
     id: "default",
     theme: "perfumes",
     title: "WhatsApp Landing",
     heading: "Habla con uno de nuestros vendedores",
     message: "Hola! Quiero consultar productos",
     buttonText: "Hablar con",
-    logo: "./media/logo/aventus/lg-aventus.svg",
+    logo: "/media/logo/aventus/lg-aventus.svg",
     logoWidth: "300px",
     logoHeight: "300px",
-    background: "./media/bg-deskop/aventus/bg-aventus.png",
-    backgroundMobile: "./media/bg-mobile/aventus/bg-mobile-aventus.png",
+    background: "/media/bg-deskop/aventus/bg-aventus.png",
+    backgroundMobile: "/media/bg-mobile/aventus/bg-mobile-aventus.png",
     employees: [
       { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
       { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
@@ -250,20 +197,20 @@ export function getDefaultBrand() {
     ctaPadding: "16px 32px",
     logoOverflow: "visible",
   };
-  return brand;
 }
 
-export function getAllBrands() {
-  const store = storeGetAllBrands();
+export async function getAllBrands() {
+  const store = await storeGetAllBrands();
   return store.map(s => {
     const cfg = staticBrandData[s.slug || s.id];
-    return { ...s, ...cfg, employees: cfg ? getBrandEmployees(cfg) : [] };
+    // Preserve DB id (UUID), merge visual config from static data
+    return { ...cfg, ...s, employees: cfg ? getBrandEmployees(cfg) : [] };
   });
 }
 
-export function getBrandById(id: string) {
-  const s = storeGetBrandById(id);
+export async function getBrandById(id: string) {
+  const s = await storeGetBrandById(id);
   if (!s) return null;
   const cfg = staticBrandData[s.slug || s.id];
-  return { ...s, ...cfg, employees: cfg ? getBrandEmployees(cfg) : [] };
+  return { ...cfg, ...s, employees: cfg ? getBrandEmployees(cfg) : [] };
 }

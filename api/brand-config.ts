@@ -8,16 +8,16 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const host = req.headers["host"] || "";
   const full = req.query.full !== undefined;
 
-  let brand = slug ? (getBrandBySlug(slug) || getBrandById(slug)) : null;
-  if (!brand) brand = getBrandByDomain(host);
+  let brand = slug ? (await getBrandBySlug(slug) || await getBrandById(slug)) : null;
+  if (!brand) brand = await getBrandByDomain(host);
 
   if (!brand) {
     return res.status(404).json({ error: "brand_not_found" });
   }
 
   if (full) {
-    const sucursales = getSucursalesByBrand(brand.id);
-    const vendors = getVendorsByBrand(brand.id);
+    const sucursales = await getSucursalesByBrand(brand.id);
+    const vendors = await getVendorsByBrand(brand.id);
     return res.status(200).json({
       ...brand,
       sucursales: sucursales.map(s => ({

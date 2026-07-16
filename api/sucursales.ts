@@ -15,8 +15,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
   if (req.method === "GET") {
     const brandId = req.query.brand_id as string;
-    if (brandId) return res.status(200).json(getSucursalesByBrand(brandId));
-    return res.status(200).json(getAllSucursales());
+    if (brandId) return res.status(200).json(await getSucursalesByBrand(brandId));
+    return res.status(200).json(await getAllSucursales());
   }
 
   if (req.method === "POST") {
@@ -24,16 +24,17 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     if (!brand_id || !name) {
       return res.status(400).json({ error: "brand_id_name_required" });
     }
-    const s = createSucursal({ brand_id, name, address: address || "" });
+    const s = await createSucursal({ brand_id, name, address: address || "" });
     return res.status(201).json(s);
   }
 
   if (req.method === "PUT") {
-    const { brand_id, name, ...data } = req.body || {};
-    if (!brand_id || !name) {
+    const { brand_id, name, old_name, ...data } = req.body || {};
+    const lookupName = old_name || name;
+    if (!brand_id || !lookupName) {
       return res.status(400).json({ error: "brand_id_name_required" });
     }
-    const s = updateSucursal(brand_id, name, data);
+    const s = await updateSucursal(brand_id, lookupName, { name, ...data });
     if (!s) return res.status(404).json({ error: "not_found" });
     return res.status(200).json(s);
   }
@@ -43,7 +44,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     if (!brand_id || !name) {
       return res.status(400).json({ error: "brand_id_name_required" });
     }
-    const ok = deleteSucursal(brand_id, name);
+    const ok = await deleteSucursal(brand_id, name);
     if (!ok) return res.status(404).json({ error: "not_found" });
     return res.status(200).json({ ok: true });
   }

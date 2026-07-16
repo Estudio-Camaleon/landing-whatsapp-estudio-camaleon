@@ -1,6 +1,6 @@
 # WhatsApp Landing Page System
 
-Sistema multi-marca de landing pages para derivar clientes a WhatsApp. Rotación global de vendedores, cooldown por IP y tracking server-side via Edge Function + Supabase.
+Sistema multi-marca de landing pages para derivar clientes a WhatsApp. Rotación round-robin de vendedores, cooldown por IP y tracking via Supabase.
 
 ## Arquitectura
 
@@ -8,163 +8,135 @@ Sistema multi-marca de landing pages para derivar clientes a WhatsApp. Rotación
 landing-whatsapp/
 ├── index.html                       # Landing principal
 ├── styles.css                       # Estilos globales + temas
-├── main.js                          # Lógica de frontend (módulo ES)
+├── main.js                          # Lógica de frontend (ES module)
 ├── brands.js                        # Configuración visual de marcas
-├── services/
-│   └── api.js                       # Cliente fetch para /assign-vendor
-├── apps/
-│   └── admin/                       # Panel de control
-│       ├── index.html
-│       ├── styles.css
-│       ├── main.js
-│       └── services/
-│           └── api.js
-├── netlify.toml                     # Configuración de Edge Functions
-├── netlify/
-│   └── edge-functions/
-│       ├── assign-vendor.ts         # Asignación + rotación + cooldown
-│       ├── get-stats.ts             # Métricas del panel
-│       ├── get-vendors.ts           # Listado de vendedores
-│       └── update-vendor.ts         # Activar/desactivar vendedor
+├── services/api.js                  # Cliente fetch para /assign-vendor
+├── api/                             # Vercel Serverless Functions (TypeScript)
+│   ├── _lib/
+│   │   ├── auth.ts                  # JWT sign/verify (HMAC-SHA256)
+│   │   ├── brands-data.ts           # Configuración visual estática por marca
+│   │   ├── store.ts                 # Capa de persistencia (Supabase)
+│   │   └── supabase.ts             # Cliente Supabase
+│   ├── assign-vendor.ts             # Asignación + rotación + cooldown
+│   ├── brand-config.ts              # Configuración pública de marca
+│   ├── brands.ts                    # CRUD marcas (admin)
+│   ├── vendors.ts                   # CRUD vendedores (admin)
+│   ├── sucursales.ts               # CRUD sucursales (admin)
+│   ├── events.ts                    # Historial de eventos (admin)
+│   ├── public-brands.ts             # Listado público de marcas
+│   ├── get-stats.ts                 # Métricas (admin)
+│   ├── get-vendors.ts               # Vendedores (admin)
+│   └── upload-asset.ts              # Upload de assets a Supabase Storage
+├── apps/admin/                      # Panel de administración SPA
 ├── supabase/
-│   └── schema.sql                   # Esquema de base de datos
-├── media/
-│   ├── logo/                        # Logos SVG por marca
-│   └── background/                  # Fondos (desktop y mobile)
-├── .env.example                     # Variables de entorno requeridas
-├── .gitignore
-└── README.md
+│   ├── schema.sql                   # Esquema completo + RLS
+│   └── seed.sql                     # Datos iniciales
+├── public/media/                    # Assets por marca (logo, fondos)
+├── vercel.json                      # Configuración Vercel
+├── tsconfig.json
+└── .env.example
 ```
 
 ## Flujo del cliente
 
 ```
-1. ACCESO
-   └─ Usuario ingresa vía dominio propio o ?brand=slug
-
-2. CARGA INICIAL (client-side)
-   ├─ Se detecta la marca (brands.js) para tema visual
-   ├─ Logo, fondo y estilos específicos
-   └─ Se muestra overlay de carga
-
-3. ASIGNACIÓN (server-side via Edge Function)
-   ├─ GET /assign-vendor
-   ├─ Detecta brand por dominio o ?brand=slug
-   ├─ Verifica cooldown por IP (5 min en Supabase)
-   ├─ Asigna vendedor con rotación global
-   ├─ Genera mensaje dinámico aleatorio
-   └─ Registra evento de tracking
-
-4. DERIVACIÓN
-   ├─ Redirección a wa.me/[phone]?text=[mensaje]
-   └─ Si está en cooldown → mensaje de espera
+1. ACCESO → Usuario ingresa vía dominio propio o ?brand=slug
+2. CARGA  → Se detecta la marca, aplica tema visual (logo, fondo, colores)
+3. SUCURSAL → Selecciona sucursal (si aplica)
+4. ASIGNACIÓN → GET /assign-vendor → rotación round-robin + cooldown 5min por IP
+5. DERIVACIÓN → Redirección a wa.me/[phone]?text=[mensaje]
 ```
 
-## Marcas disponibles
+## Marcas incluidas
 
-| Slug          | Negocio        | Vendedores | ¿Con dominio? |
-|---------------|----------------|------------|---------------|
-| aventus       | Perfumería     | 3          | Sí            |
-| maggiestore   | Indumentaria   | 1          | Sí            |
-| tuslibrosya   | Librería       | 3          | Sí            |
-| default       | Genérica       | 3          | Netlify.app   |
+| Slug          | Negocio        | Rubro         | Vendedores |
+|---------------|----------------|---------------|------------|
+| aventus       | Perfumería     | perfumes      | 3          |
+| maggiestore   | Indumentaria   | indumentaria  | 1          |
+| tuslibrosya   | Librería       | libreria      | 4          |
 
-## Probar en desarrollo
+Cada marca tiene tema visual propio (fondos, logos, colores, espaciado).
 
-```bash
-# Servir local
-npx serve .
+## Requisitos
 
-# Probar marca específica (solo UI local, sin backend)
-http://localhost:3000/?brand=aventus
-
-# En producción (Netlify) si llama a la Edge Function real
-https://wsprotador.netlify.app/?brand=maggiestore
-```
-
-## Características técnicas
-
-- **Rotación global** — No hackeable desde el cliente, estado en Supabase
-- **Cooldown server-side** — Por IP, 5 min, responde HTTP 429
-- **Tracking en base de datos** — Eventos con IP, user-agent, vendor
-- **Multi-tenant flexible** — `?brand=slug` sin dominio propio, o dominio real
-- **100% serverless** — Netlify Edge Functions + Supabase, sin servidor propio
-- **CSP estricto** — Solo permite recursos propios y Google Fonts
-- **Panel de administración** — Métricas, vendedores, activar/desactivar
-- **Sin dependencias frontend** — Vanilla JS, CSS puro
-- **Responsive** — Desktop y mobile con breakpoints específicos
+- Node.js 22+
+- Supabase proyecto (gratuito)
+- Vercel CLI (`npm i -g vercel`) para desarrollo local
 
 ## Configuración
 
 ### 1. Supabase
 
-Ejecutar `supabase/schema.sql` en SQL Editor y poblar datos:
+1. Crear proyecto en [supabase.com](https://supabase.com)
+2. Ejecutar `supabase/schema.sql` en SQL Editor
+3. Ejecutar `supabase/seed.sql` para datos iniciales
+4. Crear bucket `brand-assets` en Storage (público)
 
-```sql
-INSERT INTO brands (name, domain, slug) VALUES
-  ('Aventus Perfumería', 'aventus.com', 'aventus'),
-  ('MaggieStore Indumentaria', 'maggiestore.com', 'maggiestore'),
-  ('TusLibrosYa Librería', 'tuslibrosya.com', 'tuslibrosya'),
-  ('Netlify Test', 'wsprotador.netlify.app', 'default');
+### 2. Variables de entorno
 
-INSERT INTO vendors (brand_id, name, phone) VALUES
-  ((SELECT id FROM brands WHERE slug='aventus'), 'Dario', '5493815272820'),
-  ((SELECT id FROM brands WHERE slug='aventus'), 'Neo', '5493813583226'),
-  ((SELECT id FROM brands WHERE slug='aventus'), 'Facundo', '5493812114879'),
-  ((SELECT id FROM brands WHERE slug='maggiestore'), 'Dario', '5493815272820'),
-  ((SELECT id FROM brands WHERE slug='tuslibrosya'), 'Dario', '5493815272820'),
-  ((SELECT id FROM brands WHERE slug='tuslibrosya'), 'Neo', '5493813583226'),
-  ((SELECT id FROM brands WHERE slug='tuslibrosya'), 'Facundo', '5493812114879'),
-  ((SELECT id FROM brands WHERE slug='default'), 'Dario', '5493815272820'),
-  ((SELECT id FROM brands WHERE slug='default'), 'Neo', '5493813583226'),
-  ((SELECT id FROM brands WHERE slug='default'), 'Facundo', '5493812114879');
+```bash
+# .env.local
+SUPABASE_URL=https://[ref].supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJ...
+ADMIN_USER=admin
+ADMIN_PASSWORD=<contraseña_segura>
 ```
 
-Si la API Data está expuesta, otorgar permisos:
+### 3. Desarrollo local
 
-```sql
-grant all on public.brands to anon;
-grant all on public.vendors to anon;
-grant all on public.rotation_state to anon;
-grant all on public.events to anon;
+```bash
+vercel dev          # Inicia servidor local
 ```
 
-### 2. Netlify
-
-Setear en Site settings → Environment variables:
-
+Probar marcas:
 ```
-SUPABASE_URL = https://[ref].supabase.co
-SUPABASE_ANON_KEY = eyJhbGciOiJ...
-ADMIN_USER = admin
-ADMIN_PASSWORD = <contraseña_segura>
+http://localhost:3000/                          → Selector de marcas
+http://localhost:3000/?brand=aventus            → Marca específica
+http://localhost:3000/?brand=maggiestore        → MaggieStore
+http://localhost:3000/?brand=tuslibrosya        → TusLibrosYa!
 ```
 
-### 3. Agregar dominio propio
+### 4. Deploy en Vercel
+
+```bash
+vercel --prod
+```
+
+Configurar Environment Variables en Vercel Dashboard.
+
+### 5. Dominio propio
 
 ```
-Netlify → Site settings → Domain management → Add custom domain
+Vercel → Project → Domains → Add
 ```
 
-```sql
-UPDATE brands SET domain = 'maggiestore.com' WHERE slug = 'maggiestore';
-```
+La detección automática de marca por dominio funciona mapeando `dominio.com` al slug en Supabase.
 
 ## Panel de administración
 
-Accedé vía `https://wsprotador.netlify.app/login` (o `?brand=slug` para ver datos de una marca específica).
+```
+/login          → Inicio de sesión
+/apps/admin/    → Dashboard, Marcas, Sucursales, Vendedores, Eventos
+```
 
-| Endpoint | Método | Descripción |
-|----------|--------|-------------|
-| `/login` | GET | Página de inicio de sesión |
-| `/auth/login` | POST | Autenticación (`{ user, password }`) |
-| `/get-stats` | GET | Métricas (requiere token) |
-| `/get-vendors` | GET | Vendedores (requiere token) |
-| `/update-vendor` | POST | Activar/desactivar (requiere token) |
+### Endpoints admin (requieren token Bearer)
 
-### Auth
+| Endpoint | Métodos | Descripción |
+|----------|---------|-------------|
+| `/api/brands` | GET/POST/PUT/DELETE | CRUD marcas |
+| `/api/vendors` | GET/POST/PUT/DELETE | CRUD vendedores |
+| `/api/sucursales` | GET/POST/PUT/DELETE | CRUD sucursales |
+| `/api/events` | GET | Historial con filtros |
+| `/api/upload-asset` | POST | Subir logo/fondo a Supabase Storage |
+| `/get-stats` | GET | Métricas por vendedor |
+| `/get-vendors` | GET | Vendedores por marca |
 
-- Las credenciales se configuran vía environment variables `ADMIN_USER` y `ADMIN_PASSWORD` en Netlify
-- El login devuelve un token JWT simple firmado con HMAC-SHA256
-- Token expira en 24 h, almacenado en localStorage
-- Todos los endpoints admin validan el token en cada request
+## Multi-tenant / Multi-rubro
+
+- Cada marca es un tenant aislado con su propia configuración visual
+- Rubros: `perfumes`, `indumentaria`, `libreria` (cada uno con tema único)
+- Detección de marca: `?brand=slug` → dominio personalizado → fallback a default
+- RLS policies en Supabase aseguran aislamiento de datos
+- Sucursales permiten sub-división dentro de cada marca
+- Rotación round-robin independiente por marca
+- Cooldown de 5 minutos por IP (persistente en Supabase)

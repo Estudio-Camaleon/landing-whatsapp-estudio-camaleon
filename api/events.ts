@@ -20,7 +20,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const page = parseInt((req.query.page as string) || "1", 10);
   const limit = Math.min(parseInt((req.query.limit as string) || "50", 10), 200);
 
-  let filtered = getAllEvents();
+  let filtered = await getAllEvents();
 
   if (brandId) filtered = filtered.filter(e => e.brand_id === brandId);
   if (vendorId) filtered = filtered.filter(e => e.vendor_id === vendorId);

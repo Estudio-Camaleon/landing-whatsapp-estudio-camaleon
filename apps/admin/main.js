@@ -209,10 +209,11 @@ async function brandForm(brandId) {
   modal.querySelector("#btn-modal-save").onclick = async () => {
     const name = modal.querySelector("#f-brand-name").value.trim()
     if (!name) return
+    const slugInput = modal.querySelector("#f-brand-slug").value.trim()
     const data = {
       name,
       domain: modal.querySelector("#f-brand-domain").value.trim() || null,
-      slug: modal.querySelector("#f-brand-slug").value.trim() || undefined
+      slug: slugInput || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
     }
     if (isEdit) data.id = brandId
     const result = isEdit ? await updateBrand(data) : await createBrand(data)
@@ -326,7 +327,7 @@ async function sucursalForm(brandId, sucursalName) {
     if (!name || !brand_id) return
 
     if (isEdit) {
-      await updateSucursal({ brand_id: existing.brand_id, name: sucursalName, name, address })
+      await updateSucursal({ brand_id: existing.brand_id, old_name: sucursalName, name, address })
     } else {
       await createSucursal({ brand_id, name, address })
     }
@@ -625,6 +626,8 @@ async function loadEventsTable(container) {
 
   const brandMap = {}
   brands.forEach(b => brandMap[b.id] = b.name)
+  const vendorMap = {}
+  vendors.forEach(v => vendorMap[v.id] = v.name)
 
   wrap.innerHTML = `
     <table>
@@ -636,7 +639,7 @@ async function loadEventsTable(container) {
             hour: "2-digit", minute: "2-digit"
           })
           return `<tr>
-            <td><strong>${e.vendor?.name || "—"}</strong></td>
+            <td><strong>${vendorMap[e.vendor_id] || "—"}</strong></td>
             <td style="color:rgba(255,255,255,0.4)">${brandMap[e.brand_id] || "—"}</td>
             <td style="font-family:monospace;font-size:0.8rem;color:rgba(255,255,255,0.4)">${e.ip || "—"}</td>
             <td style="font-size:0.82rem;color:rgba(255,255,255,0.5)">${date}</td>

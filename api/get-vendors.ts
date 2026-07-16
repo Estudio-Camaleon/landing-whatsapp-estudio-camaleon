@@ -13,8 +13,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const host = req.headers["host"] || "";
   const brandSlug = req.query.brand as string;
 
-  let brand = brandSlug ? getBrandBySlug(brandSlug) : null;
-  if (!brand) brand = getBrandByDomain(host);
+  let brand = brandSlug ? await getBrandBySlug(brandSlug) : null;
+  if (!brand) brand = await getBrandByDomain(host);
   if (!brand) brand = getDefaultBrand();
 
   const vendors = brand.employees.map((e, i) => ({

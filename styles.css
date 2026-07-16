@@ -438,13 +438,62 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.cooldown-message {
+.cooldown-message,
+.assign-confirm {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   padding: 20px 0;
   animation: cooldownIn 0.5s ease-out;
+}
+
+.confirm-icon {
+  margin-bottom: 4px;
+}
+
+.confirm-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.confirm-text strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.confirm-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  opacity: 0.6;
+}
+
+.confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px 28px;
+  background: #25d366;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.confirm-btn:hover {
+  background: #20bd5a;
+  transform: scale(1.02);
+}
+
+.confirm-btn:active {
+  transform: scale(0.98);
 }
 
 @keyframes cooldownIn {

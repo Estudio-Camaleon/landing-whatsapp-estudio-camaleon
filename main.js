@@ -60,17 +60,15 @@ async function init() {
     return;
   }
 
-  var isDynamicBrand = false;
-  if (brandParam && CONFIG && CONFIG.id !== brandParam) {
+  if (brandParam) {
     try {
       var res = await fetch("/api/brand-config?slug=" + encodeURIComponent(brandParam) + "&full=true");
       if (res.ok) {
         var data = await res.json();
         Object.assign(CONFIG, data);
-        isDynamicBrand = true;
       }
     } catch (e) {
-      console.error("[brand-config] error al cargar assets (dynamic)", e);
+      console.error("[brand-config] error al cargar config dinámico", e);
     }
   }
 
@@ -80,11 +78,7 @@ async function init() {
   if (CONFIG.logo_url) CONFIG.logo = CONFIG.logo_url;
   if (CONFIG.background_url) CONFIG.background = CONFIG.background_url;
   if (CONFIG.background_mobile_url) CONFIG.background_mobile = CONFIG.background_mobile_url;
-  if (isDynamicBrand) {
-    if (CONFIG.meta_title) CONFIG.title = CONFIG.meta_title;
-    else if (CONFIG.name) CONFIG.title = CONFIG.name;
-    if (CONFIG.name) CONFIG.heading = "Habla con " + CONFIG.name;
-  }
+  if (CONFIG.meta_title) CONFIG.title = CONFIG.meta_title;
 
   __secLog("INFO", "P\u00E1gina cargada", {
     brand: brandName,

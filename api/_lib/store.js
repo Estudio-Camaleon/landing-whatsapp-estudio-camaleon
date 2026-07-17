@@ -11,11 +11,12 @@ function isTableNotFound(error) {
 }
 
 function mapBrand(row) {
-  return {
+  const r = {
     id: row.id,
     name: row.name,
     slug: row.slug,
     domain: row.domain,
+    active: row.active,
     logo_url: row.logo_url,
     background_url: row.background_url,
     background_mobile_url: row.background_mobile_url,
@@ -23,7 +24,20 @@ function mapBrand(row) {
     meta_description: row.meta_description,
     og_image: row.og_image,
     favicon_url: row.favicon_url,
+    theme: row.theme || null,
+    heading: row.heading || null,
+    button_text: row.button_text || null,
+    logo_width: row.logo_width || null,
+    logo_height: row.logo_height || null,
+    card_padding: row.card_padding || null,
+    logo_margin_bottom: row.logo_margin_bottom || null,
+    heading_margin_bottom: row.heading_margin_bottom || null,
+    seller_margin_bottom: row.seller_margin_bottom || null,
+    cta_padding: row.cta_padding || null,
+    logo_overflow: row.logo_overflow || null,
+    accent: row.accent || null,
   };
+  return r;
 }
 
 function mapVendor(row) {
@@ -82,16 +96,21 @@ export async function getBrandByDomain(host) {
   return data ? mapBrand(data) : null;
 }
 
+const PRESENTATION_COLS = [
+  "theme", "heading", "button_text", "logo_width", "logo_height",
+  "card_padding", "logo_margin_bottom", "heading_margin_bottom",
+  "seller_margin_bottom", "cta_padding", "logo_overflow", "accent"
+];
+
 export async function createBrand(data) {
   const insertData = {
     name: data.name,
     slug: data.slug,
     domain: data.domain || null,
   };
-  if (data.meta_title) insertData.meta_title = data.meta_title;
-  if (data.meta_description) insertData.meta_description = data.meta_description;
-  if (data.og_image) insertData.og_image = data.og_image;
-  if (data.favicon_url) insertData.favicon_url = data.favicon_url;
+  for (const col of ["meta_title", "meta_description", "og_image", "favicon_url", "logo_url", "background_url", "background_mobile_url", ...PRESENTATION_COLS]) {
+    if (data[col] !== undefined) insertData[col] = data[col];
+  }
 
   const { data: inserted, error } = await getSupabase()
     .from("brands")
@@ -117,6 +136,9 @@ export async function updateBrand(id, updates) {
   if (updates.meta_description) dbUpdates.meta_description = updates.meta_description;
   if (updates.og_image) dbUpdates.og_image = updates.og_image;
   if (updates.favicon_url) dbUpdates.favicon_url = updates.favicon_url;
+  for (const col of PRESENTATION_COLS) {
+    if (updates[col] !== undefined) dbUpdates[col] = updates[col];
+  }
 
   const { data, error } = await getSupabase()
     .from("brands")

@@ -1,4 +1,4 @@
-import { getBrandBySlug, getBrandByDomain, getBrandById } from "./_lib/store.js";
+import { getBrandBySlug, getBrandByDomain } from "./_lib/brands-data.js";
 import { getSucursalesByBrand } from "./_lib/store.js";
 import { getVendorsByBrand } from "./_lib/store.js";
 
@@ -7,7 +7,7 @@ export default async (req, res) => {
   const host = req.headers["host"] || "";
   const full = req.query.full !== undefined;
 
-  let brand = slug ? (await getBrandBySlug(slug) || await getBrandById(slug)) : null;
+  let brand = slug ? await getBrandBySlug(slug) : null;
   if (!brand) brand = await getBrandByDomain(host);
 
   if (!brand) {
@@ -32,11 +32,28 @@ export default async (req, res) => {
   }
 
   return res.status(200).json({
+    id: brand.id,
     slug: brand.slug || brand.id,
+    name: brand.name || null,
+    theme: brand.theme || null,
+    title: brand.title || brand.meta_title || null,
+    heading: brand.heading || null,
+    buttonText: brand.buttonText || null,
+    logo: brand.logo || null,
     logo_url: brand.logo_url || null,
+    logoWidth: brand.logoWidth || null,
+    logoHeight: brand.logoHeight || null,
+    background: brand.background || null,
     background_url: brand.background_url || null,
+    backgroundMobile: brand.backgroundMobile || null,
     background_mobile_url: brand.background_mobile_url || null,
     meta_title: brand.meta_title || null,
     favicon_url: brand.favicon_url || null,
+    cardPadding: brand.cardPadding || null,
+    logoMarginBottom: brand.logoMarginBottom || null,
+    logoOverflow: brand.logoOverflow || null,
+    headingMarginBottom: brand.headingMarginBottom || null,
+    sellerMarginBottom: brand.sellerMarginBottom || null,
+    ctaPadding: brand.ctaPadding || null,
   });
 };

@@ -449,7 +449,7 @@ async function renderBrandSelector() {
 
   var grid = document.getElementById("stores-grid");
   grid.innerHTML =
-    '<div class="selector-loader"><div class="spinner" style="width:32px;height:32px;border-width:3px"></div></div>';
+    '<div class="selector-loader"><div class="spinner"></div></div>';
 
   function transitionTo(url) {
     var transition = document.createElement("div");
@@ -500,7 +500,7 @@ async function renderBrandSelector() {
       grid.appendChild(card);
     });
   } catch (e) {
-    grid.innerHTML = '<p style="color:var(--text-muted);padding:20px">No hay tiendas disponibles</p>';
+    grid.innerHTML = '<p class="error-message">No hay tiendas disponibles</p>';
   }
 
   setTimeout(hideLoading, 800);

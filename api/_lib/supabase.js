@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import WebSocket from "ws"; // 1. Importamos la librería que acabamos de instalar
 
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";
@@ -14,6 +15,10 @@ export function getSupabase() {
     }
     client = createClient(supabaseUrl, supabaseAnonKey, {
       auth: { persistSession: false },
+      // 2. Le indicamos explícitamente a Supabase qué motor de WebSockets usar
+      realtime: {
+        transport: WebSocket,
+      },
     });
   }
   return client;
@@ -26,6 +31,10 @@ export function getSupabaseService() {
     }
     serviceClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false },
+      // Repetimos la configuración aquí
+      realtime: {
+        transport: WebSocket,
+      },
     });
   }
   return serviceClient;

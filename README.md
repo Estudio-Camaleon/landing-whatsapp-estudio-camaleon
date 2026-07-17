@@ -29,11 +29,17 @@ landing-whatsapp/
 │   └── upload-asset.ts              # Upload de assets a Supabase Storage
 ├── apps/admin/                      # Panel de administración SPA
 ├── supabase/
-│   ├── schema.sql                   # Esquema completo + RLS
-│   └── seed.sql                     # Datos iniciales
-├── public/media/                    # Assets por marca (logo, fondos)
+│   └── schema.sql                   # Esquema completo + RLS
+├── public/api.js                    # API helper público
+├── tests/                           # Tests unitarios (Vitest)
+├── .github/                         # GitHub Actions (semantic-release)
+├── dev-server.ts                    # Servidor de desarrollo local
 ├── vercel.json                      # Configuración Vercel
 ├── tsconfig.json
+├── vitest.config.ts
+├── .nvmrc                           # Node 24
+├── .releaserc.json                  # Config semantic-release
+├── .vercelignore
 └── .env.example
 ```
 
@@ -59,7 +65,7 @@ Cada marca tiene tema visual propio (fondos, logos, colores, espaciado).
 
 ## Requisitos
 
-- Node.js 22+
+- Node.js 24+
 - Supabase proyecto (gratuito)
 - Vercel CLI (`npm i -g vercel`) para desarrollo local
 
@@ -69,8 +75,7 @@ Cada marca tiene tema visual propio (fondos, logos, colores, espaciado).
 
 1. Crear proyecto en [supabase.com](https://supabase.com)
 2. Ejecutar `supabase/schema.sql` en SQL Editor
-3. Ejecutar `supabase/seed.sql` para datos iniciales
-4. Crear bucket `brand-assets` en Storage (público)
+3. Crear bucket `brand-assets` en Storage (público)
 
 ### 2. Variables de entorno
 

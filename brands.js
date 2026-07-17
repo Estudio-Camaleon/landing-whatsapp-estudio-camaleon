@@ -14,7 +14,7 @@ const BRANDS = {
     backgroundMobile: "https://kjkqpsxpgqmscccjcnmg.supabase.co/storage/v1/object/public/brand-assets/maggiestore/background_mobile.png",
     employees: [],
     sucursales: [
-      { name: "Casa Central", address: "San Miguel de Tucumán", employees: [{ name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" }] },
+      { name: "Casa Central", address: "San Miguel de Tucumán", employees: [{ name: "Dario" }] },
     ],
     // ─── Espaciado ───────────────────────────────────────
     cardPadding: "48px 40px 40px",
@@ -41,11 +41,11 @@ const BRANDS = {
     employees: [],
     sucursales: [
       { name: "Casa Central", address: "San Miguel de Tucumán", employees: [
-        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
-        { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
+        { name: "Dario" },
+        { name: "Neo" },
       ]},
       { name: "Sucursal Yerba Buena", address: "Yerba Buena", employees: [
-        { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+        { name: "Facundo" },
       ]},
     ],
     // ─── Espaciado ───────────────────────────────────────
@@ -73,12 +73,12 @@ const BRANDS = {
     employees: [],
     sucursales: [
       { name: "Casa Central", address: "San Miguel de Tucumán", employees: [
-        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
-        { name: "Neo", phone: "NTQ5MzgxMzU4MzIyNg==" },
+        { name: "Dario" },
+        { name: "Neo" },
       ]},
       { name: "Sucursal Yerba Buena", address: "Yerba Buena", employees: [
-        { name: "Dario", phone: "NTQ5MzgxNTI3MjgyMA==" },
-        { name: "Facundo", phone: "NTQ5MzgxMjExNDg3OQ==" },
+        { name: "Dario" },
+        { name: "Facundo" },
       ]},
     ],
     // ─── Espaciado ───────────────────────────────────────

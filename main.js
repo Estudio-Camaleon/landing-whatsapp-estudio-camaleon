@@ -422,7 +422,9 @@ async function loadBrandAssets() {
     if (data.logo_url) CONFIG.logo = data.logo_url;
     if (data.background_url) CONFIG.background = data.background_url;
     if (data.background_mobile_url) CONFIG.background_mobile = data.background_mobile_url;
-  } catch (e) {}
+  } catch (e) {
+    console.error("[brand-config] error al cargar assets", e);
+  }
 }
 
 async function renderBrandSelector() {
@@ -489,7 +491,7 @@ async function renderBrandSelector() {
         '<div class="store-card-shine"></div>' +
         '<div class="store-card-icon">' + iconHtml + '</div>' +
         '<div class="store-card-info"><span class="store-card-name">' + escapeHtml(b.name || b.id) + '</span></div>' +
-        '<span class="store-card-badge">' + themeLabel + '</span>' +
+        '<span class="store-card-badge">' + escapeHtml(themeLabel) + '</span>' +
         '<span class="store-card-arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>';
 
       card.addEventListener("click", function(e) {
@@ -544,7 +546,9 @@ async function init() {
         CONFIG = { ...CONFIG, ...data };
         isDynamicBrand = true;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("[brand-config] error al cargar assets (dynamic)", e);
+    }
   }
 
   // ─── Normal Brand Mode ────────────────────────────────

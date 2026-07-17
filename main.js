@@ -2,25 +2,14 @@ import { assignVendor } from "./services/api.js";
 
 // ─── Brand Detection ──────────────────────────────────────────
 function detectBrand() {
-  var brands = window.__brands || {};
-  var hostname = window.location.hostname;
   var params = new URLSearchParams(window.location.search);
   var brandOverride = params.get("brand");
 
   if (brandOverride) {
-    for (var key in brands) {
-      if (brands[key].id === brandOverride) {
-        return brands[key];
-      }
-    }
+    return { id: brandOverride, slug: brandOverride };
   }
 
-  var cleanHost = hostname.replace(/^www\./, "").toLowerCase();
-  if (brands[cleanHost]) {
-    return brands[cleanHost];
-  }
-
-  return brands["default"] || null;
+  return { id: "default", slug: null };
 }
 
 var CONFIG = detectBrand();
@@ -408,13 +397,7 @@ async function handleClick(e) {
 }
 
 async function loadBrandAssets() {
-  var slug = null;
-  if (window.__brands) {
-    for (var key in window.__brands) {
-      if (window.__brands[key] === CONFIG) { slug = window.__brands[key].id; break; }
-    }
-  }
-  if (!slug) slug = CONFIG.slug || null;
+  var slug = CONFIG.slug || null;
   var q = slug ? "?slug=" + slug : "";
   try {
     var res = await fetch("/api/brand-config" + q);
@@ -523,18 +506,11 @@ async function init() {
 
   // ─── Brand Selector Mode (root URL) ──────────────────
   if (!brandParam && CONFIG && CONFIG.id === "default") {
-    var cleanHost = window.location.hostname.replace(/^www\./, "").toLowerCase();
-    var hasSpecificHost = false;
-    for (var k in window.__brands) {
-      if (k !== "default" && k === cleanHost) { hasSpecificHost = true; break; }
-    }
-    if (!hasSpecificHost) {
-      document.title = CONFIG.title || "WhatsApp Landing";
-      var metaDesc = document.getElementById("meta-description");
-      if (metaDesc) metaDesc.content = CONFIG.meta_description || "";
-      renderBrandSelector();
-      return;
-    }
+    document.title = CONFIG.title || "WhatsApp Landing";
+    var metaDesc = document.getElementById("meta-description");
+    if (metaDesc) metaDesc.content = CONFIG.meta_description || "";
+    renderBrandSelector();
+    return;
   }
 
   // ─── Dynamic brand via API (not in brands.js) ────────

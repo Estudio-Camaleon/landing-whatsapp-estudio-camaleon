@@ -1,12 +1,11 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { verifyToken } from "./_lib/auth";
+import { verifyToken } from "./_lib/auth.js";
 import {
   getAllVendors, getVendorById, getVendorsByBrand,
   createVendor, updateVendor, deleteVendor
-} from "./_lib/store";
+} from "./_lib/store.js";
 
-export default async (req: VercelRequest, res: VercelResponse) => {
-  const authHeader = (req.headers["authorization"] as string) || "";
+export default async (req, res) => {
+  const authHeader = req.headers["authorization"] || "";
   const token = authHeader.replace("Bearer ", "");
   const payload = await verifyToken(token);
   if (!payload) {
@@ -14,9 +13,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   if (req.method === "GET") {
-    const brandId = req.query.brand_id as string;
-    const vendorId = req.query.id as string;
-    const sucursalName = req.query.sucursal as string;
+    const brandId = req.query.brand_id;
+    const vendorId = req.query.id;
+    const sucursalName = req.query.sucursal;
 
     if (vendorId) {
       const v = await getVendorById(vendorId);

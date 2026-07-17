@@ -1,12 +1,11 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { verifyToken } from "./_lib/auth";
+import { verifyToken } from "./_lib/auth.js";
 import {
   getAllBrands, getBrandById,
   createBrand, updateBrand, deleteBrand
-} from "./_lib/store";
+} from "./_lib/store.js";
 
-export default async (req: VercelRequest, res: VercelResponse) => {
-  const authHeader = (req.headers["authorization"] as string) || "";
+export default async (req, res) => {
+  const authHeader = req.headers["authorization"] || "";
   const token = authHeader.replace("Bearer ", "");
   const payload = await verifyToken(token);
   if (!payload) {
@@ -14,7 +13,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   if (req.method === "GET") {
-    const brandId = req.query.id as string;
+    const brandId = req.query.id;
     if (brandId) {
       const brand = await getBrandById(brandId);
       if (!brand) return res.status(404).json({ error: "not_found" });

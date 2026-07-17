@@ -1,14 +1,13 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { verifyToken } from "./_lib/auth";
-import { getSupabaseService } from "./_lib/supabase";
-import { updateBrand } from "./_lib/store";
+import { verifyToken } from "./_lib/auth.js";
+import { getSupabaseService } from "./_lib/supabase.js";
+import { updateBrand } from "./_lib/store.js";
 
-export default async (req: VercelRequest, res: VercelResponse) => {
+export default async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
-  const authHeader = (req.headers["authorization"] as string) || "";
+  const authHeader = req.headers["authorization"] || "";
   const token = authHeader.replace("Bearer ", "");
   const payload = await verifyToken(token);
   if (!payload) {
@@ -27,7 +26,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   const buffer = Buffer.from(file_base64, "base64");
-  const mimeExt: Record<string, string> = {
+  const mimeExt = {
     "image/png": "png",
     "image/jpeg": "jpg",
     "image/webp": "webp",
@@ -53,7 +52,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     .from("brand-assets")
     .getPublicUrl(fileName);
 
-  const urlMap: Record<string, string> = {
+  const urlMap = {
     logo: "logo_url",
     background: "background_url",
     background_mobile: "background_mobile_url",

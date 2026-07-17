@@ -1,118 +1,16 @@
-import { getSupabase } from "./supabase";
-
-export interface StoredBrand {
-  id: string;
-  name: string | null;
-  slug: string | null;
-  domain: string | null;
-  theme?: string;
-  title?: string;
-  heading?: string;
-  message?: string;
-  buttonText?: string;
-  logo?: string;
-  logoWidth?: string;
-  logoHeight?: string;
-  background?: string;
-  backgroundMobile?: string;
-  active?: boolean;
-  cardPadding?: string;
-  logoMarginBottom?: string;
-  headingMarginBottom?: string;
-  sellerMarginBottom?: string;
-  ctaPadding?: string;
-  logoOverflow?: string;
-  logo_url?: string | null;
-  background_url?: string | null;
-  background_mobile_url?: string | null;
-  meta_title?: string | null;
-  meta_description?: string | null;
-  og_image?: string | null;
-  favicon_url?: string | null;
-}
-
-export interface StoredSucursal {
-  id?: string;
-  name: string;
-  address: string;
-  brand_id: string;
-}
-
-export interface StoredVendor {
-  id: string;
-  brand_id: string;
-  sucursal_name?: string;
-  name: string;
-  phone: string;
-  active: boolean;
-  schedule: Record<string, { active: boolean; start?: string; end?: string }>;
-}
-
-interface DbBrand {
-  id: string;
-  name: string | null;
-  slug: string | null;
-  domain: string | null;
-  logo_url: string | null;
-  background_url: string | null;
-  background_mobile_url: string | null;
-  meta_title: string | null;
-  meta_description: string | null;
-  og_image: string | null;
-  favicon_url: string | null;
-}
-
-type VendorInsert = {
-  brand_id: string;
-  sucursal_name?: string | null;
-  name: string;
-  phone: string;
-  active: boolean;
-  schedule: Record<string, unknown>;
-};
-
-interface DbVendor {
-  id: string;
-  brand_id: string;
-  sucursal_name: string | null;
-  name: string;
-  phone: string;
-  active: boolean;
-  schedule: Record<string, { active: boolean; start?: string; end?: string }>;
-}
-
-interface DbSucursal {
-  id: string;
-  name: string;
-  address: string;
-  brand_id: string;
-}
-
-interface DbEvent {
-  id: string;
-  brand_id: string;
-  vendor_id: string | null;
-  ip: string;
-  user_agent: string | null;
-  created_at: string;
-}
-
-interface DbRotation {
-  brand_id: string;
-  last_vendor_index: number;
-}
+import { getSupabase } from "./supabase.js";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function isValidUUID(s: string): boolean {
+function isValidUUID(s) {
   return UUID_RE.test(s);
 }
 
-function isTableNotFound(error: any): boolean {
+function isTableNotFound(error) {
   return error?.code === "PGRST205";
 }
 
-function mapBrand(row: DbBrand): StoredBrand {
+function mapBrand(row) {
   return {
     id: row.id,
     name: row.name,
@@ -128,7 +26,7 @@ function mapBrand(row: DbBrand): StoredBrand {
   };
 }
 
-function mapVendor(row: DbVendor): StoredVendor {
+function mapVendor(row) {
   return {
     id: row.id,
     brand_id: row.brand_id,
@@ -142,7 +40,7 @@ function mapVendor(row: DbVendor): StoredVendor {
 
 // ─── Brands ───
 
-export async function getAllBrands(): Promise<StoredBrand[]> {
+export async function getAllBrands() {
   const { data, error } = await getSupabase()
     .from("brands")
     .select("*")
@@ -151,7 +49,7 @@ export async function getAllBrands(): Promise<StoredBrand[]> {
   return (data || []).map(mapBrand);
 }
 
-export async function getBrandById(id: string): Promise<StoredBrand | null> {
+export async function getBrandById(id) {
   if (!isValidUUID(id)) return null;
   const { data, error } = await getSupabase()
     .from("brands")
@@ -160,20 +58,20 @@ export async function getBrandById(id: string): Promise<StoredBrand | null> {
     .maybeSingle();
   if (error && error.code === "PGRST116") return null;
   if (error) throw error;
-  return data ? mapBrand(data as DbBrand) : null;
+  return data ? mapBrand(data) : null;
 }
 
-export async function getBrandBySlug(slug: string): Promise<StoredBrand | null> {
+export async function getBrandBySlug(slug) {
   const { data, error } = await getSupabase()
     .from("brands")
     .select("*")
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw error;
-  return data ? mapBrand(data as DbBrand) : null;
+  return data ? mapBrand(data) : null;
 }
 
-export async function getBrandByDomain(host: string): Promise<StoredBrand | null> {
+export async function getBrandByDomain(host) {
   const clean = host.replace(/^www\./, "").toLowerCase();
   const { data, error } = await getSupabase()
     .from("brands")
@@ -181,19 +79,11 @@ export async function getBrandByDomain(host: string): Promise<StoredBrand | null
     .eq("domain", clean)
     .maybeSingle();
   if (error) throw error;
-  return data ? mapBrand(data as DbBrand) : null;
+  return data ? mapBrand(data) : null;
 }
 
-export async function createBrand(data: {
-  name: string;
-  slug: string;
-  domain?: string | null;
-  meta_title?: string | null;
-  meta_description?: string | null;
-  og_image?: string | null;
-  favicon_url?: string | null;
-}): Promise<StoredBrand> {
-  const insertData: Record<string, unknown> = {
+export async function createBrand(data) {
+  const insertData = {
     name: data.name,
     slug: data.slug,
     domain: data.domain || null,
@@ -209,13 +99,13 @@ export async function createBrand(data: {
     .select()
     .single();
   if (error) throw error;
-  return mapBrand(inserted as DbBrand);
+  return mapBrand(inserted);
 }
 
-const OPTIONAL_COLS = ["meta_title", "meta_description", "og_image", "favicon_url"] as const;
+const OPTIONAL_COLS = ["meta_title", "meta_description", "og_image", "favicon_url"];
 
-export async function updateBrand(id: string, updates: Record<string, unknown>): Promise<StoredBrand | null> {
-  const dbUpdates: Record<string, unknown> = {};
+export async function updateBrand(id, updates) {
+  const dbUpdates = {};
   if (updates.name !== undefined) dbUpdates.name = updates.name;
   if (updates.slug !== undefined) dbUpdates.slug = updates.slug;
   if (updates.domain !== undefined) dbUpdates.domain = updates.domain;
@@ -246,13 +136,13 @@ export async function updateBrand(id: string, updates: Record<string, unknown>):
       .single();
     if (retryError && retryError.code === "PGRST116") return null;
     if (retryError) throw retryError;
-    return retryData ? mapBrand(retryData as DbBrand) : null;
+    return retryData ? mapBrand(retryData) : null;
   }
   if (error) throw error;
-  return data ? mapBrand(data as DbBrand) : null;
+  return data ? mapBrand(data) : null;
 }
 
-export async function deleteBrand(id: string): Promise<boolean> {
+export async function deleteBrand(id) {
   // Delete child records first (FK constraints may lack CASCADE in existing DB)
   await getSupabase().from("vendors").delete().eq("brand_id", id);
   await getSupabase().from("sucursales").delete().eq("brand_id", id);
@@ -265,7 +155,7 @@ export async function deleteBrand(id: string): Promise<boolean> {
 
 // ─── Sucursales ───
 
-export async function getSucursalesByBrand(brandId: string): Promise<StoredSucursal[]> {
+export async function getSucursalesByBrand(brandId) {
   try {
     const { data, error } = await getSupabase()
       .from("sucursales")
@@ -280,7 +170,7 @@ export async function getSucursalesByBrand(brandId: string): Promise<StoredSucur
   }
 }
 
-export async function getAllSucursales(): Promise<StoredSucursal[]> {
+export async function getAllSucursales() {
   try {
     const { data, error } = await getSupabase()
       .from("sucursales")
@@ -294,7 +184,7 @@ export async function getAllSucursales(): Promise<StoredSucursal[]> {
   }
 }
 
-export async function createSucursal(data: StoredSucursal): Promise<StoredSucursal> {
+export async function createSucursal(data) {
   const { data: inserted, error } = await getSupabase()
     .from("sucursales")
     .insert({ name: data.name, address: data.address, brand_id: data.brand_id })
@@ -304,8 +194,8 @@ export async function createSucursal(data: StoredSucursal): Promise<StoredSucurs
   return { id: inserted.id, name: inserted.name, address: inserted.address, brand_id: inserted.brand_id };
 }
 
-export async function updateSucursal(brandId: string, oldName: string, updates: Partial<StoredSucursal>): Promise<StoredSucursal | null> {
-  const dbUpdates: Record<string, unknown> = {};
+export async function updateSucursal(brandId, oldName, updates) {
+  const dbUpdates = {};
   if (updates.name !== undefined) dbUpdates.name = updates.name;
   if (updates.address !== undefined) dbUpdates.address = updates.address;
 
@@ -321,7 +211,7 @@ export async function updateSucursal(brandId: string, oldName: string, updates: 
   return data ? { id: data.id, name: data.name, address: data.address, brand_id: data.brand_id } : null;
 }
 
-export async function deleteSucursal(brandId: string, name: string): Promise<boolean> {
+export async function deleteSucursal(brandId, name) {
   const { error } = await getSupabase()
     .from("sucursales")
     .delete()
@@ -333,7 +223,7 @@ export async function deleteSucursal(brandId: string, name: string): Promise<boo
 
 // ─── Vendors ───
 
-export async function getAllVendors(): Promise<StoredVendor[]> {
+export async function getAllVendors() {
   const { data, error } = await getSupabase()
     .from("vendors")
     .select("*")
@@ -342,17 +232,17 @@ export async function getAllVendors(): Promise<StoredVendor[]> {
   return (data || []).map(mapVendor);
 }
 
-export async function getVendorById(id: string): Promise<StoredVendor | null> {
+export async function getVendorById(id) {
   const { data, error } = await getSupabase()
     .from("vendors")
     .select("*")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return data ? mapVendor(data as DbVendor) : null;
+  return data ? mapVendor(data) : null;
 }
 
-export async function getVendorsByBrand(brandId: string, sucursalName?: string): Promise<StoredVendor[]> {
+export async function getVendorsByBrand(brandId, sucursalName) {
   let query = getSupabase().from("vendors").select("*").eq("brand_id", brandId);
   if (sucursalName) query = query.eq("sucursal_name", sucursalName);
   const { data, error } = await query.order("name");
@@ -360,14 +250,14 @@ export async function getVendorsByBrand(brandId: string, sucursalName?: string):
   return (data || []).map(mapVendor);
 }
 
-export async function createVendor(data: Omit<StoredVendor, "id">): Promise<StoredVendor> {
-  const insertData: VendorInsert = {
+export async function createVendor(data) {
+  const insertData = {
     brand_id: data.brand_id,
     sucursal_name: data.sucursal_name || null,
     name: data.name,
     phone: data.phone,
     active: data.active,
-    schedule: data.schedule as Record<string, unknown>,
+    schedule: data.schedule,
   };
   const { data: inserted, error } = await getSupabase()
     .from("vendors")
@@ -375,11 +265,11 @@ export async function createVendor(data: Omit<StoredVendor, "id">): Promise<Stor
     .select()
     .single();
   if (error) throw error;
-  return mapVendor(inserted as DbVendor);
+  return mapVendor(inserted);
 }
 
-export async function updateVendor(id: string, updates: Partial<StoredVendor>): Promise<StoredVendor | null> {
-  const dbUpdates: Record<string, unknown> = {};
+export async function updateVendor(id, updates) {
+  const dbUpdates = {};
   if (updates.name !== undefined) dbUpdates.name = updates.name;
   if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
   if (updates.active !== undefined) dbUpdates.active = updates.active;
@@ -394,10 +284,10 @@ export async function updateVendor(id: string, updates: Partial<StoredVendor>): 
     .single();
   if (error && error.code === "PGRST116") return null;
   if (error) throw error;
-  return data ? mapVendor(data as DbVendor) : null;
+  return data ? mapVendor(data) : null;
 }
 
-export async function deleteVendor(id: string): Promise<boolean> {
+export async function deleteVendor(id) {
   const { error } = await getSupabase().from("vendors").delete().eq("id", id);
   if (error) throw error;
   return true;
@@ -405,13 +295,7 @@ export async function deleteVendor(id: string): Promise<boolean> {
 
 // ─── Events ───
 
-export async function addEvent(event: {
-  brand_id: string;
-  vendor_id: string | null;
-  ip: string;
-  user_agent: string | null;
-  created_at: string;
-}): Promise<void> {
+export async function addEvent(event) {
   const { error } = await getSupabase().from("events").insert({
     brand_id: event.brand_id,
     vendor_id: event.vendor_id,
@@ -422,7 +306,7 @@ export async function addEvent(event: {
   if (error) throw error;
 }
 
-export async function getRecentEvents(brandId: string, ip: string, since: string): Promise<{ created_at: string }[]> {
+export async function getRecentEvents(brandId, ip, since) {
   const { data, error } = await getSupabase()
     .from("events")
     .select("created_at")
@@ -431,39 +315,32 @@ export async function getRecentEvents(brandId: string, ip: string, since: string
     .gte("created_at", since)
     .limit(10);
   if (error) throw error;
-  return (data || []) as { created_at: string }[];
+  return (data || []);
 }
 
-export async function getAllEvents(): Promise<{
-  id: string;
-  brand_id: string;
-  vendor_id: string | null;
-  ip: string;
-  user_agent: string | null;
-  created_at: string;
-}[]> {
+export async function getAllEvents() {
   const { data, error } = await getSupabase()
     .from("events")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(1000);
   if (error) throw error;
-  return (data || []) as DbEvent[];
+  return (data || []);
 }
 
 // ─── Rotation State ───
 
-export async function getRotationState(brandId: string): Promise<{ brand_id: string; last_vendor_index: number } | null> {
+export async function getRotationState(brandId) {
   const { data, error } = await getSupabase()
     .from("rotation_state")
     .select("*")
     .eq("brand_id", brandId)
     .maybeSingle();
   if (error) throw error;
-  return data as DbRotation | null;
+  return data;
 }
 
-export async function setRotationState(state: { brand_id: string; last_vendor_index: number }): Promise<void> {
+export async function setRotationState(state) {
   const { error } = await getSupabase()
     .from("rotation_state")
     .upsert(state, { onConflict: "brand_id" });

@@ -3,43 +3,9 @@ import {
   getBrandBySlug as storeGetBrandBySlug,
   getBrandByDomain as storeGetBrandByDomain,
   getAllBrands as storeGetAllBrands,
-} from "./store";
+} from "./store.js";
 
-export interface Employee {
-  name: string;
-  phone: string;
-}
-
-export interface Sucursal {
-  name: string;
-  address: string;
-  employees: Employee[];
-}
-
-export interface BrandConfig {
-  id: string;
-  theme?: string;
-  title?: string;
-  heading?: string;
-  message?: string;
-  buttonText?: string;
-  logo?: string;
-  logoWidth?: string;
-  logoHeight?: string;
-  background?: string;
-  backgroundMobile?: string;
-  employees?: Employee[];
-  sucursales?: Sucursal[];
-  active?: boolean;
-  cardPadding?: string;
-  logoMarginBottom?: string;
-  headingMarginBottom?: string;
-  sellerMarginBottom?: string;
-  ctaPadding?: string;
-  logoOverflow?: string;
-}
-
-const staticBrandData: Record<string, BrandConfig> = {
+const staticBrandData = {
   maggiestore: {
     id: "maggiestore",
     theme: "indumentaria",
@@ -121,14 +87,14 @@ const staticBrandData: Record<string, BrandConfig> = {
   },
 };
 
-function mergeWithStatic(storeBrand: { id: string; slug?: string } & Record<string, unknown>) {
+function mergeWithStatic(storeBrand) {
   const cfg = staticBrandData[storeBrand.slug || storeBrand.id];
   if (!cfg) return storeBrand;
   // Static config provides visual defaults, DB overrides (preserves UUID id)
   return { ...cfg, ...storeBrand, employees: getBrandEmployees(cfg) };
 }
 
-export function getBrandEmployees(brand: BrandConfig | { id: string }, sucursalName?: string): Employee[] {
+export function getBrandEmployees(brand, sucursalName) {
   if (sucursalName) {
     const cfg = staticBrandData[brand.id];
     if (cfg?.sucursales) {
@@ -136,8 +102,8 @@ export function getBrandEmployees(brand: BrandConfig | { id: string }, sucursalN
       if (s) return s.employees;
     }
   }
-  if (brand && "employees" in brand && (brand as BrandConfig).employees?.length) {
-    return (brand as BrandConfig).employees!;
+  if (brand && "employees" in brand && brand.employees?.length) {
+    return brand.employees;
   }
   const cfg = staticBrandData[brand.id];
   if (cfg?.sucursales) return cfg.sucursales.flatMap(s => s.employees);
@@ -145,9 +111,9 @@ export function getBrandEmployees(brand: BrandConfig | { id: string }, sucursalN
   return [];
 }
 
-export async function getBrandByDomain(host: string) {
+export async function getBrandByDomain(host) {
   const store = await storeGetBrandByDomain(host);
-  if (store) return mergeWithStatic(store) as BrandConfig;
+  if (store) return mergeWithStatic(store);
   const clean = host.replace(/^www\./, "").toLowerCase();
   for (const key in staticBrandData) {
     if (key === clean || key === host) {
@@ -157,9 +123,9 @@ export async function getBrandByDomain(host: string) {
   return null;
 }
 
-export async function getBrandBySlug(slug: string) {
+export async function getBrandBySlug(slug) {
   const store = await storeGetBrandBySlug(slug);
-  if (store) return mergeWithStatic(store) as BrandConfig;
+  if (store) return mergeWithStatic(store);
   if (staticBrandData[slug]) {
     const cfg = staticBrandData[slug];
     return { ...cfg, employees: getBrandEmployees(cfg) };
@@ -167,7 +133,7 @@ export async function getBrandBySlug(slug: string) {
   return null;
 }
 
-export function getDefaultBrand(): BrandConfig {
+export function getDefaultBrand() {
   return {
     id: "default",
     theme: "perfumes",
@@ -193,7 +159,7 @@ export async function getAllBrands() {
   });
 }
 
-export async function getBrandById(id: string) {
+export async function getBrandById(id) {
   const s = await storeGetBrandById(id);
   if (!s) return null;
   const cfg = staticBrandData[s.slug || s.id];

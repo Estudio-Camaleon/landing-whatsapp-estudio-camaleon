@@ -1,10 +1,9 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getBrandBySlug, getBrandByDomain, getBrandById } from "./_lib/store";
-import { getSucursalesByBrand } from "./_lib/store";
-import { getVendorsByBrand } from "./_lib/store";
+import { getBrandBySlug, getBrandByDomain, getBrandById } from "./_lib/store.js";
+import { getSucursalesByBrand } from "./_lib/store.js";
+import { getVendorsByBrand } from "./_lib/store.js";
 
-export default async (req: VercelRequest, res: VercelResponse) => {
-  const slug = req.query.slug as string;
+export default async (req, res) => {
+  const slug = req.query.slug;
   const host = req.headers["host"] || "";
   const full = req.query.full !== undefined;
 

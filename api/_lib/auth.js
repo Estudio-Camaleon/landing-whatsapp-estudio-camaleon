@@ -1,10 +1,10 @@
 import { createHmac } from "crypto";
 
-function getSecret(): string {
+function getSecret() {
   return process.env.ADMIN_PASSWORD || "";
 }
 
-export async function signToken(payload: Record<string, unknown>): Promise<string> {
+export async function signToken(payload) {
   const secret = getSecret();
   const data = JSON.stringify(payload);
   const hmac = createHmac("sha256", secret);
@@ -14,7 +14,7 @@ export async function signToken(payload: Record<string, unknown>): Promise<strin
   return `${payloadB64}.${sig}`;
 }
 
-export async function verifyToken(token: string): Promise<Record<string, unknown> | null> {
+export async function verifyToken(token) {
   try {
     const parts = token.split(".");
     if (parts.length !== 2) return null;
@@ -28,7 +28,7 @@ export async function verifyToken(token: string): Promise<Record<string, unknown
     const expectedSig = hmac.digest("base64");
 
     if (sigB64 !== expectedSig) return null;
-    if (payload.exp && (payload.exp as number) < Date.now()) return null;
+    if (payload.exp && payload.exp < Date.now()) return null;
 
     return payload;
   } catch {

@@ -1,16 +1,15 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getAllBrands } from "./_lib/brands-data";
+import { getAllBrands } from "./_lib/brands-data.js";
 
-const THEME_ACCENTS: Record<string, string> = {
+const THEME_ACCENTS = {
   perfumes: "#7c3aed",
   libreria: "#d97706",
   indumentaria: "#00c9fd",
 };
 
-export default async (_req: VercelRequest, res: VercelResponse) => {
+export default async (_req, res) => {
   const brands = (await getAllBrands())
-    .filter((b: any) => b.slug !== "default" && b.id !== "default")
-    .map((b: any) => ({
+    .filter((b) => b.slug !== "default" && b.id !== "default")
+    .map((b) => ({
       id: b.id,
       name: b.title || b.name,
       theme: b.theme || "indumentaria",

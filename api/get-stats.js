@@ -1,21 +1,20 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { verifyToken } from "./_lib/auth";
-import { getAllEvents, getAllVendors } from "./_lib/store";
-import { getBrandBySlug, getBrandEmployees } from "./_lib/brands-data";
+import { verifyToken } from "./_lib/auth.js";
+import { getAllEvents, getAllVendors } from "./_lib/store.js";
+import { getBrandBySlug, getBrandEmployees } from "./_lib/brands-data.js";
 
-export default async (req: VercelRequest, res: VercelResponse) => {
-  const authHeader = (req.headers["authorization"] as string) || "";
+export default async (req, res) => {
+  const authHeader = req.headers["authorization"] || "";
   const token = authHeader.replace("Bearer ", "");
   const payload = await verifyToken(token);
   if (!payload) {
     return res.status(401).json({ error: "unauthorized" });
   }
 
-  const brandSlug = req.query.brand as string;
+  const brandSlug = req.query.brand;
   const allEvents = await getAllEvents();
 
   let filteredEvents = allEvents;
-  let vendors: { id: string; name: string }[] = [];
+  let vendors = [];
 
   if (brandSlug) {
     const brand = await getBrandBySlug(brandSlug);
@@ -29,12 +28,12 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     vendors = [...new Map(storeVendors.map(v => [v.id, v])).values()];
   }
 
-  const counts: Record<string, number> = {};
+  const counts = {};
   filteredEvents.forEach(e => {
     counts[e.vendor_id] = (counts[e.vendor_id] || 0) + 1;
   });
 
-  const stats: Record<string, number> = {};
+  const stats = {};
   vendors.forEach(v => {
     stats[v.name] = counts[v.id] || 0;
   });

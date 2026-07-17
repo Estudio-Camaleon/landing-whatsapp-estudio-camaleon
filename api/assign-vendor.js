@@ -1,29 +1,28 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getBrandByDomain, getBrandBySlug, getDefaultBrand, getBrandEmployees } from "./_lib/brands-data";
+import { getBrandByDomain, getBrandBySlug, getDefaultBrand, getBrandEmployees } from "./_lib/brands-data.js";
 import {
   addEvent, getRecentEvents, getRotationState, setRotationState,
   getVendorsByBrand
-} from "./_lib/store";
+} from "./_lib/store.js";
 
-export default async (req: VercelRequest, res: VercelResponse) => {
+export default async (req, res) => {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
   const host = req.headers["host"] || "";
-  const brandSlug = (req.query.brand as string) || null;
-  const sucursalName = (req.query.sucursal as string) || null;
+  const brandSlug = req.query.brand || null;
+  const sucursalName = req.query.sucursal || null;
 
   const ip =
-    (req.headers["x-forwarded-for"] as string)?.split(",")?.[0]?.trim() ||
-    (req.headers["x-real-ip"] as string) ||
+    req.headers["x-forwarded-for"]?.split(",")?.[0]?.trim() ||
+    req.headers["x-real-ip"] ||
     "unknown";
 
   let brand = brandSlug ? await getBrandBySlug(brandSlug) : null;
   if (!brand) brand = await getBrandByDomain(host);
   if (!brand) brand = getDefaultBrand();
 
-  if ((brand as any).active === false) {
+  if (brand.active === false) {
     return res.status(503).json({ error: "brand_suspended" });
   }
 
@@ -40,12 +39,12 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   // Build vendor list with IDs from DB, fallback to static config
-  let vendorList: { id: string | null; name: string; phone: string }[] = [];
+  let vendorList = [];
   const dynamicVendors = await getVendorsByBrand(brand.id, sucursalName || undefined);
   if (dynamicVendors.length > 0) {
     vendorList = dynamicVendors.map(v => ({ id: v.id, name: v.name, phone: v.phone }));
   } else {
-    vendorList = getBrandEmployees(brand as any, sucursalName || undefined).map(e => ({
+    vendorList = getBrandEmployees(brand, sucursalName || undefined).map(e => ({
       id: null,
       name: e.name,
       phone: atob(e.phone),
@@ -68,7 +67,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const vendor = vendorList[nextIndex];
   const decodedPhone = vendor.phone;
 
-  const brandName = (brand as any).name || "";
+  const brandName = brand.name || "";
   const messages = [
     "Hola! Vengo de la web de " + brandName + ", quería consultar sobre un producto",
     "Buenas! Te contacto desde la página de " + brandName + ", me interesaría recibir informacion",

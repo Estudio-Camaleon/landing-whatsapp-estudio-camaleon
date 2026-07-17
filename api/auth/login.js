@@ -1,7 +1,6 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { signToken } from "../_lib/auth";
+import { signToken } from "../_lib/auth.js";
 
-export default async (req: VercelRequest, res: VercelResponse) => {
+export default async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "method_not_allowed" });
   }

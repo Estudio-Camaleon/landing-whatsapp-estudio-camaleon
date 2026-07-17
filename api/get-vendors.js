@@ -1,9 +1,8 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { verifyToken } from "./_lib/auth";
-import { getBrandByDomain, getBrandBySlug, getDefaultBrand } from "./_lib/brands-data";
+import { verifyToken } from "./_lib/auth.js";
+import { getBrandByDomain, getBrandBySlug, getDefaultBrand } from "./_lib/brands-data.js";
 
-export default async (req: VercelRequest, res: VercelResponse) => {
-  const authHeader = (req.headers["authorization"] as string) || "";
+export default async (req, res) => {
+  const authHeader = req.headers["authorization"] || "";
   const token = authHeader.replace("Bearer ", "");
   const payload = await verifyToken(token);
   if (!payload) {
@@ -11,7 +10,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   const host = req.headers["host"] || "";
-  const brandSlug = req.query.brand as string;
+  const brandSlug = req.query.brand;
 
   let brand = brandSlug ? await getBrandBySlug(brandSlug) : null;
   if (!brand) brand = await getBrandByDomain(host);

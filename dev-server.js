@@ -20,7 +20,7 @@ app.use("/services", express.static(path.join(__dirname, "services")));
 app.use(express.static(__dirname, { index: false }));
 
 // ─── Import API handlers dynamically ───
-async function loadHandler(modulePath: string) {
+async function loadHandler(modulePath) {
   try {
     const fullPath = path.resolve(__dirname, modulePath);
     // Windows needs file:// URLs for dynamic import()
@@ -30,19 +30,19 @@ async function loadHandler(modulePath: string) {
     if (typeof handler === "function") return handler;
     console.warn(`  ⚠ ${modulePath}: export is not a function`);
     return null;
-  } catch (err: any) {
+  } catch (err) {
     console.warn(`  ⚠ ${modulePath}: ${err.message}`);
     return null;
   }
 }
 
-function wrapHandler(fn: (req: any, res: any) => Promise<void>) {
-  return async (req: any, res: any) => {
+function wrapHandler(fn) {
+  return async (req, res) => {
     try {
       const vercelReq = {
         ...req,
         query: Object.fromEntries(
-          Object.entries(req.query).map(([k, v]: [string, any]) => [k, String(v)])
+          Object.entries(req.query).map(([k, v]) => [k, String(v)])
         ),
         cookies: req.cookies || {},
         headers: req.headers,
@@ -52,7 +52,7 @@ function wrapHandler(fn: (req: any, res: any) => Promise<void>) {
       };
       // Express 5 uses async error handling - wrap in try/catch
       await Promise.resolve(fn(vercelReq, res));
-    } catch (err: any) {
+    } catch (err) {
       console.error(`[${req.method} ${req.path}]`, err);
       if (!res.headersSent) {
         res.status(500).json({ error: "internal_error", message: err.message });
@@ -61,23 +61,18 @@ function wrapHandler(fn: (req: any, res: any) => Promise<void>) {
   };
 }
 
-interface RouteEntry {
-  route: string;
-  modulePath: string;
-}
-
-const API_ROUTES: RouteEntry[] = [
-  { route: "/assign-vendor", modulePath: "./api/assign-vendor.ts" },
-  { route: "/auth/login", modulePath: "./api/auth/login.ts" },
-  { route: "/get-stats", modulePath: "./api/get-stats.ts" },
-  { route: "/get-vendors", modulePath: "./api/get-vendors.ts" },
-  { route: "/api/brand-config", modulePath: "./api/brand-config.ts" },
-  { route: "/api/public-brands", modulePath: "./api/public-brands.ts" },
-  { route: "/api/brands", modulePath: "./api/brands.ts" },
-  { route: "/api/vendors", modulePath: "./api/vendors.ts" },
-  { route: "/api/sucursales", modulePath: "./api/sucursales.ts" },
-  { route: "/api/events", modulePath: "./api/events.ts" },
-  { route: "/api/upload-asset", modulePath: "./api/upload-asset.ts" },
+const API_ROUTES = [
+  { route: "/assign-vendor", modulePath: "./api/assign-vendor.js" },
+  { route: "/auth/login", modulePath: "./api/auth/login.js" },
+  { route: "/get-stats", modulePath: "./api/get-stats.js" },
+  { route: "/get-vendors", modulePath: "./api/get-vendors.js" },
+  { route: "/api/brand-config", modulePath: "./api/brand-config.js" },
+  { route: "/api/public-brands", modulePath: "./api/public-brands.js" },
+  { route: "/api/brands", modulePath: "./api/brands.js" },
+  { route: "/api/vendors", modulePath: "./api/vendors.js" },
+  { route: "/api/sucursales", modulePath: "./api/sucursales.js" },
+  { route: "/api/events", modulePath: "./api/events.js" },
+  { route: "/api/upload-asset", modulePath: "./api/upload-asset.js" },
 ];
 
 async function init() {
@@ -115,9 +110,6 @@ async function init() {
   });
 
   // ─── SPA fallback ───
-  app.get("/brands.js", (_req, res) => {
-    res.sendFile(path.join(__dirname, "brands.js"));
-  });
   app.get("/main.js", (_req, res) => {
     res.sendFile(path.join(__dirname, "main.js"));
   });

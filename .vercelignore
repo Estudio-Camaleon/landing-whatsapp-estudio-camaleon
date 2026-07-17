@@ -5,8 +5,6 @@ README.md
 .env
 .env.local
 tests/
-vitest.config.ts
-netlify/
-netlify.toml
+vitest.config.js
 .github/
 .releaserc.json

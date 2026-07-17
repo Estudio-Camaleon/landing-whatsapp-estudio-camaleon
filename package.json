@@ -6,7 +6,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "tsx dev-server.ts",
+    "dev": "node dev-server.js",
     "dev:vercel": "vercel dev",
     "build": "",
     "start": "vercel start",

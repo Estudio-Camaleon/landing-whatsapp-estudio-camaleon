@@ -17,7 +17,7 @@ describe("Auth", () => {
     const token = await signToken(payload);
     const result = await verifyToken(token);
     expect(result).not.toBeNull();
-    expect(result!.user).toBe("admin");
+    expect(result.user).toBe("admin");
   });
 
   it("verifyToken returns null for expired token", async () => {

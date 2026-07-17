@@ -140,3 +140,24 @@ La detección automática de marca por dominio funciona mapeando `dominio.com` a
 - Sucursales permiten sub-división dentro de cada marca
 - Rotación round-robin independiente por marca
 - Cooldown de 5 minutos por IP (persistente en Supabase)
+
+## Troubleshooting
+
+### Las APIs devuelven 500 / FUNCTION_INVOCATION_FAILED
+
+1. Verificar que las variables `SUPABASE_URL` y `SUPABASE_ANON_KEY` estén configuradas en **Vercel → Settings → Environment Variables**
+2. Si aparece `FUNCTION_INVOCATION_FAILED`, revisar que los archivos `api/*.ts` no tengan errores de compilación TypeScript (`strict: true` exige manejo correcto de `catch (e: unknown)`)
+3. Para depurar errores de API, revisar los Logs en Vercel Dashboard
+
+### Content Security Policy (CSP) bloquea estilos
+
+Si se agrega un CSP restrictivo (`style-src 'self'`), los estilos inline en `main.js` serán bloqueados. Solución:
+- Reemplazar atributos `style="..."` por clases CSS definidas en `styles.css`
+- El spinner y mensaje de error ya usan las clases `.spinner` y `.error-message`
+
+## Stack
+
+- **Frontend:** HTML + CSS + Vanilla JS (sin frameworks)
+- **Backend:** TypeScript + Vercel Serverless Functions
+- **Base de datos:** Supabase (PostgreSQL + Storage)
+- **Deploy:** Vercel

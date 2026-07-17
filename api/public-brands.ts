@@ -23,8 +23,8 @@ export default async (_req: VercelRequest, res: VercelResponse) => {
       }));
 
     return res.status(200).json(brands);
-  } catch (err) {
-    console.error("[public-brands] error:", err);
-    return res.status(500).json({ error: "internal_server_error", details: err.message });
+  } catch (e) {
+    console.error("[public-brands] error:", e);
+    return res.status(500).json({ error: "internal_server_error" });
   }
 };

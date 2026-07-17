@@ -51,8 +51,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       meta_title: brand.meta_title || null,
       favicon_url: brand.favicon_url || null,
     });
-  } catch (err) {
-    console.error("[brand-config] error:", err);
-    return res.status(500).json({ error: "internal_server_error", details: err.message });
+  } catch (e) {
+    console.error("[brand-config] error:", e);
+    return res.status(500).json({ error: "internal_server_error" });
   }
 };

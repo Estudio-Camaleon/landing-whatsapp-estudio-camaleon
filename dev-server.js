@@ -118,8 +118,12 @@ async function init() {
   });
   // Admin static files
   app.get("/apps/admin/:file", (req, res) => {
-    const filePath = path.join(__dirname, "apps", "admin", req.params.file);
-    if (existsSync(filePath)) return res.sendFile(filePath);
+    const requestedPath = path.resolve(__dirname, "apps", "admin", req.params.file);
+    const allowedPrefix = path.resolve(__dirname, "apps", "admin");
+    if (!requestedPath.startsWith(allowedPrefix + path.sep) && requestedPath !== allowedPrefix) {
+      return res.status(403).json({ error: "forbidden" });
+    }
+    if (existsSync(requestedPath)) return res.sendFile(requestedPath);
     res.sendFile(path.join(__dirname, "apps", "admin", "index.html"));
   });
 

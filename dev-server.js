@@ -3,6 +3,7 @@ import express from "express";
 import { existsSync } from "fs";
 import { createServer } from "http";
 import path from "path";
+import rateLimit from "express-rate-limit";
 
 // dotenv loads .env by default; also try .env.local
 import dotenv from "dotenv";
@@ -13,6 +14,18 @@ const app = express();
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
 app.use(express.json({ limit: "50mb" }));
+
+const strictLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: "too_many_requests", message: "Demasiados intentos. Esperá un minuto." },
+});
+
+const defaultLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: "too_many_requests", message: "Demasiadas solicitudes. Intentá de nuevo en un minuto." },
+});
 
 // ─── Static files ───
 app.use("/apps", express.static(path.join(__dirname, "apps")));
@@ -89,7 +102,8 @@ async function init() {
     }
     const handler = await loadHandler(modulePath);
     if (handler) {
-      app.all(route, wrapHandler(handler));
+      const limiter = route === "/auth/login" || route === "/assign-vendor" ? strictLimiter : defaultLimiter;
+      app.all(route, limiter, wrapHandler(handler));
       loaded++;
       console.log(`  ✓ ${route}`);
     }

@@ -1,9 +1,13 @@
 import { signToken } from "../_lib/auth.js";
+import { rateLimit, limits } from "../_lib/rate-limit.js";
 
 export default async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "method_not_allowed" });
   }
+
+  const rejected = rateLimit(limits.strict)(req, res);
+  if (rejected) return;
 
   const { user, password } = req.body;
   const adminUser = process.env.ADMIN_USER;

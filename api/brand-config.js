@@ -1,8 +1,12 @@
 import { getBrandBySlug, getBrandByDomain } from "./_lib/brands-data.js";
 import { getSucursalesByBrand } from "./_lib/store.js";
 import { getVendorsByBrand } from "./_lib/store.js";
+import { rateLimit, limits } from "./_lib/rate-limit.js";
 
 export default async (req, res) => {
+  const rejected = rateLimit(limits.public)(req, res);
+  if (rejected) return;
+
   const slug = req.query.slug;
   const host = req.headers["host"] || "";
   const full = req.query.full !== undefined;

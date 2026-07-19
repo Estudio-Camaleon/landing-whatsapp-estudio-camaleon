@@ -1,4 +1,5 @@
 import { getAllBrands } from "./_lib/brands-data.js";
+import { rateLimit, limits } from "./_lib/rate-limit.js";
 
 const THEME_ACCENTS = {
   perfumes: "#7c3aed",
@@ -7,6 +8,9 @@ const THEME_ACCENTS = {
 };
 
 export default async (req, res) => {
+  const rejected = rateLimit(limits.public)(req, res);
+  if (rejected) return;
+
   try {
     const data = await getAllBrands();
 

@@ -3,11 +3,15 @@ import {
   addEvent, getRecentEvents, getRotationState, setRotationState,
   getVendorsByBrand
 } from "./_lib/store.js";
+import { rateLimit, limits } from "./_lib/rate-limit.js";
 
 export default async (req, res) => {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "method_not_allowed" });
   }
+
+  const rejected = rateLimit(limits.strict)(req, res);
+  if (rejected) return;
 
   const host = req.headers["host"] || "";
   const brandSlug = req.query.brand || null;

@@ -1,10 +1,14 @@
 import { verifyToken } from "./_lib/auth.js";
 import { getAllEvents } from "./_lib/store.js";
+import { rateLimit, limits } from "./_lib/rate-limit.js";
 
 export default async (req, res) => {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "method_not_allowed" });
   }
+
+  const rejected = rateLimit(limits.default)(req, res);
+  if (rejected) return;
 
   const authHeader = req.headers["authorization"] || "";
   const token = authHeader.replace("Bearer ", "");
